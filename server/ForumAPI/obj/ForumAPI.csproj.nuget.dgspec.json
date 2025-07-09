@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\elfak\\cetvrta\\VII\\Napredne baze podataka\\MovieForum\\FilmskiKutak\\server\\ForumAPI\\ForumAPI.csproj": {}
+    "D:\\elfak\\cetvrta\\VII\\Napredne baze podataka\\FilmskiKutak\\server\\ForumAPI\\ForumAPI.csproj": {}
   },
   "projects": {
-    "D:\\elfak\\cetvrta\\VII\\Napredne baze podataka\\MovieForum\\FilmskiKutak\\server\\ForumAPI\\ForumAPI.csproj": {
+    "D:\\elfak\\cetvrta\\VII\\Napredne baze podataka\\FilmskiKutak\\server\\ForumAPI\\ForumAPI.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\elfak\\cetvrta\\VII\\Napredne baze podataka\\MovieForum\\FilmskiKutak\\server\\ForumAPI\\ForumAPI.csproj",
+        "projectUniqueName": "D:\\elfak\\cetvrta\\VII\\Napredne baze podataka\\FilmskiKutak\\server\\ForumAPI\\ForumAPI.csproj",
         "projectName": "ForumAPI",
-        "projectPath": "D:\\elfak\\cetvrta\\VII\\Napredne baze podataka\\MovieForum\\FilmskiKutak\\server\\ForumAPI\\ForumAPI.csproj",
+        "projectPath": "D:\\elfak\\cetvrta\\VII\\Napredne baze podataka\\FilmskiKutak\\server\\ForumAPI\\ForumAPI.csproj",
         "packagesPath": "C:\\Users\\Marija\\.nuget\\packages\\",
-        "outputPath": "D:\\elfak\\cetvrta\\VII\\Napredne baze podataka\\MovieForum\\FilmskiKutak\\server\\ForumAPI\\obj\\",
+        "outputPath": "D:\\elfak\\cetvrta\\VII\\Napredne baze podataka\\FilmskiKutak\\server\\ForumAPI\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
