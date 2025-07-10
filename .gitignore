@@ -13,6 +13,8 @@ Thumbs.db
 
 # ========== BACKEND (.NET) ==========
 # Build outputs
+**/Debug/
+**/Release/
 **/bin/
 **/obj/
 **/publish/
