@@ -24,7 +24,8 @@ namespace ForumAPI.Controllers
         }
 
         [HttpPost]
-        // [Authorize(Roles = "admin")]
+        // [Authorize(Roles = "admin")] 
+        //update: Mislim da moze svako da dodaje kategorije, ne samo admin (Emilija)
         public async Task<IActionResult> Create([FromBody] CategoryCreateDto dto)
         {
             var category = new Category

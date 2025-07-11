@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using ForumAPI.Repositories;
 using ForumAPI.Services;
+using ForumApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,9 +32,11 @@ builder.Services.AddScoped(sp =>
 builder.Services.AddScoped<ITestRepository, TestRepository>();
 builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<IPostRepository, PostRepository>();
 
 builder.Services.AddScoped<CommentService>();
 builder.Services.AddScoped<CategoryService>();
+builder.Services.AddScoped<PostService>();
 
 
 
