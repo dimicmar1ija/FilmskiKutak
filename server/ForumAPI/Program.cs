@@ -3,6 +3,7 @@ using ForumAPI.Settings;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using ForumAPI.Repositories;
+using ForumAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,6 +29,13 @@ builder.Services.AddScoped(sp =>
 
 
 builder.Services.AddScoped<ITestRepository, TestRepository>();
+builder.Services.AddScoped<ICommentRepository, CommentRepository>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+
+builder.Services.AddScoped<CommentService>();
+builder.Services.AddScoped<CategoryService>();
+
+
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
