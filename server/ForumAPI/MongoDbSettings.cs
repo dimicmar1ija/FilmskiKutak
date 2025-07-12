@@ -1,4 +1,4 @@
-namespace ForumAPI.Settings
+namespace ForumAPI
 {
     public class MongoDbSettings
     {

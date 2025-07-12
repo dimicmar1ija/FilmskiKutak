@@ -1,5 +1,5 @@
 
-using ForumAPI.Settings;
+using ForumAPI;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using ForumAPI.Repositories;
@@ -37,6 +37,8 @@ builder.Services.AddScoped<IPostRepository, PostRepository>();
 builder.Services.AddScoped<CommentService>();
 builder.Services.AddScoped<CategoryService>();
 builder.Services.AddScoped<PostService>();
+builder.Services.AddSingleton<UserService>();
+
 
 
 
