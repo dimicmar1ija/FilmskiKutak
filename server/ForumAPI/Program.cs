@@ -4,14 +4,32 @@ using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using ForumAPI.Repositories;
 using ForumAPI.Services;
+using dotenv.net;
 using ForumApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Učitaj .env fajl
+DotEnv.Load();
+
+// Učitaj connection string iz env varijable
+var mongoConn = Environment.GetEnvironmentVariable("MONGO_CONN_STRING");
+
+
 // Binduj MongoDB sekciju iz appsettings.json na klasu
-builder.Services.Configure<MongoDbSettings>(
-    builder.Configuration.GetSection("MongoDB")
-);
+builder.Services.Configure<MongoDbSettings>(options =>
+{
+    builder.Configuration.GetSection("MongoDB").Bind(options);
+
+    if (!string.IsNullOrEmpty(mongoConn))
+    {
+        options.ConnectionString = mongoConn;
+    }
+});
+
+
+
+
 
 // Registruj MongoDB klijenta
 builder.Services.AddSingleton<IMongoClient>(sp =>
