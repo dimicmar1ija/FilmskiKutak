@@ -1,5 +1,6 @@
 using ForumApi.Services;
 using ForumAPI.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -62,6 +63,21 @@ namespace MovieForumApi.Controllers
 
         }
 
+        [Authorize]
+        [HttpPost("testAuthorization")]
+        public IActionResult TestAuthorization()
+        {
+            return Ok("Authorization successful. You are authenticated.");
+        }
+
+        [Authorize(Roles = "admin")]
+        [HttpPost("adminTestAuthorization")]
+        public IActionResult AdminTestAuthorization()
+        {
+            return Ok("Authorization successful. You are authenticated as admin.");
+        }
+
+
         private string GenerateJwtToken(User user)
         {
             var jwtSettings = _configuration.GetSection("JwtSettings");
@@ -70,7 +86,8 @@ namespace MovieForumApi.Controllers
             {
                     new Claim(JwtRegisteredClaimNames.Sub, user.Id!),
                     new Claim(JwtRegisteredClaimNames.UniqueName, user.Username),
-                    new Claim(JwtRegisteredClaimNames.Email, user.Email)
+                    new Claim(JwtRegisteredClaimNames.Email, user.Email),
+                    new Claim(ClaimTypes.Role, user.Role)
                 };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.GetValue<string>("SecretKey")!));
