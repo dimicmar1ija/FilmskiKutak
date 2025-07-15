@@ -6,6 +6,9 @@ using ForumAPI.Repositories;
 using ForumAPI.Services;
 using dotenv.net;
 using ForumApi.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,9 +31,6 @@ builder.Services.Configure<MongoDbSettings>(options =>
 });
 
 
-
-
-
 // Registruj MongoDB klijenta
 builder.Services.AddSingleton<IMongoClient>(sp =>
 {
@@ -46,6 +46,28 @@ builder.Services.AddScoped(sp =>
 });
 
 
+//AUTENTIFIKACIJA
+var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+var secretKey = jwtSettings.GetValue<string>("SecretKey");
+
+builder.Services.AddAuthentication(x =>
+{
+    x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    x.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(options =>
+{
+     options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtSettings.GetValue<string>("Issuer"),
+        ValidAudience = jwtSettings.GetValue<string>("Audience"),
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
+    };
+});
 
 builder.Services.AddScoped<ITestRepository, TestRepository>();
 builder.Services.AddScoped<ICommentRepository, CommentRepository>();
@@ -56,6 +78,8 @@ builder.Services.AddScoped<CommentService>();
 builder.Services.AddScoped<CategoryService>();
 builder.Services.AddScoped<PostService>();
 builder.Services.AddSingleton<UserService>();
+
+
 
 
 
