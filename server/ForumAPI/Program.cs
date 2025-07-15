@@ -46,6 +46,14 @@ builder.Services.AddScoped(sp =>
 });
 
 
+
+
+// Override appsettings.json with .env values
+builder.Configuration["JwtSettings:SecretKey"] = Environment.GetEnvironmentVariable("JWT_SECRET_KEY");
+builder.Configuration["JwtSettings:Issuer"] = Environment.GetEnvironmentVariable("JWT_ISSUER");
+builder.Configuration["JwtSettings:Audience"] = Environment.GetEnvironmentVariable("JWT_AUDIENCE");
+builder.Configuration["JwtSettings:ExpiryMinutes"] = Environment.GetEnvironmentVariable("JWT_EXPIRY_MINUTES");
+
 //AUTENTIFIKACIJA
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings.GetValue<string>("SecretKey");
@@ -57,7 +65,7 @@ builder.Services.AddAuthentication(x =>
     x.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
 }).AddJwtBearer(options =>
 {
-     options.TokenValidationParameters = new TokenValidationParameters
+    options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
         ValidateAudience = true,
@@ -68,6 +76,8 @@ builder.Services.AddAuthentication(x =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
     };
 });
+
+builder.Services.AddAuthorization();
 
 builder.Services.AddScoped<ITestRepository, TestRepository>();
 builder.Services.AddScoped<ICommentRepository, CommentRepository>();
@@ -100,6 +110,12 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+//redosled je bitan!
+//Autentifikacija i autorizacija moraju biti pre mapiranja kontrolera
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 //Add Api routes
 
