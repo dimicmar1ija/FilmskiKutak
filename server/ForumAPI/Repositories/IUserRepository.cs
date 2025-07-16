@@ -1,3 +1,5 @@
+using ForumAPI.Models;
+
 public interface IUserRepository
 {
     Task<User?> GetByUsernameAsync(string username);

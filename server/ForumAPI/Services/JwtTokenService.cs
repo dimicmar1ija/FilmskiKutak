@@ -1,3 +1,10 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using ForumAPI.Models;
+using Microsoft.IdentityModel.Tokens;
+
+
 public class JwtTokenService(IConfiguration configuration)
 {
     private readonly IConfiguration _configuration = configuration;

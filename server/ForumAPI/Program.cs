@@ -93,7 +93,8 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<CommentService>();
 builder.Services.AddScoped<CategoryService>();
 builder.Services.AddScoped<PostService>();
-builder.Services.AddSingleton<UserService>();
+builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<JwtTokenService>();
 
 
 // Add services to the container.
