@@ -1,35 +1,30 @@
 using ForumAPI.Models;
-using MongoDB.Driver;
-using Microsoft.Extensions.Options;
-using ForumAPI;
+using ForumAPI.Repositories;
 
 namespace ForumApi.Services
 {
-
     public class UserService
     {
-        private readonly IMongoCollection<User> _usersCollection;
+        private readonly IUserRepository _userRepository;
 
-        public UserService(IOptions<MongoDbSettings> mongoSettings)
+        public UserService(IUserRepository userRepository)
         {
-            var mongoClient = new MongoClient(mongoSettings.Value.ConnectionString);
-            var database = mongoClient.GetDatabase(mongoSettings.Value.DatabaseName);
-            _usersCollection = database.GetCollection<User>("Users");
+            _userRepository = userRepository;
         }
 
-        public async Task<User?> GetByUsernameAsync(string username)
+        public Task<User?> GetByUsernameAsync(string username)
         {
-            return await _usersCollection.Find(u => u.Username == username).FirstOrDefaultAsync();
+            return _userRepository.GetByUsernameAsync(username);
         }
 
-        public async Task<User?> GetByEmailAsync(string email)
+        public Task<User?> GetByEmailAsync(string email)
         {
-            return await _usersCollection.Find(u => u.Email == email).FirstOrDefaultAsync();
+            return _userRepository.GetByEmailAsync(email);
         }
 
-        public async Task CreateAsync(User user)
+        public Task CreateAsync(User user)
         {
-            await _usersCollection.InsertOneAsync(user);
+            return _userRepository.CreateAsync(user);
         }
     }
 }

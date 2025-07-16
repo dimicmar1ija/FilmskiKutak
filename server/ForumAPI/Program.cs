@@ -88,15 +88,12 @@ builder.Services.AddScoped<ITestRepository, TestRepository>();
 builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IPostRepository, PostRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 builder.Services.AddScoped<CommentService>();
 builder.Services.AddScoped<CategoryService>();
 builder.Services.AddScoped<PostService>();
 builder.Services.AddSingleton<UserService>();
-
-
-
-
 
 
 // Add services to the container.

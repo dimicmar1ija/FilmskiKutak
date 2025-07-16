@@ -7,23 +7,25 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-namespace MovieForumApi.Controllers
+namespace ForumApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
+        private readonly JwtTokenService _jwtTokenService;
         private readonly UserService _userService;
         private readonly IConfiguration _configuration;
 
-        public AuthController(UserService userService, IConfiguration configuration)
+        public AuthController(UserService userService, IConfiguration configuration,JwtTokenService jwtTokenService)
         {
             _userService = userService;
             _configuration = configuration;
+            _jwtTokenService = jwtTokenService;
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+        public async Task<IActionResult> Register([FromBody] RegisterDto request)
         {
             var existingUser = await _userService.GetByUsernameAsync(request.Username);
             if (existingUser != null)
@@ -47,7 +49,7 @@ namespace MovieForumApi.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        public async Task<IActionResult> Login([FromBody] LoginDto request)
         {
             var user = await _userService.GetByUsernameAsync(request.Username);
             if (user == null)
@@ -57,7 +59,7 @@ namespace MovieForumApi.Controllers
             if (!validPassword)
                 return Unauthorized("Invalid username or password.");
 
-            var token = GenerateJwtToken(user);
+            var token = _jwtTokenService.GenerateToken(user);
 
             return Ok(new { Token = token });
 
@@ -76,37 +78,8 @@ namespace MovieForumApi.Controllers
         {
             return Ok("Authorization successful. You are authenticated as admin.");
         }
-
-
-        private string GenerateJwtToken(User user)
-        {
-            var jwtSettings = _configuration.GetSection("JwtSettings");
-
-            var claims = new[]
-            {
-                    new Claim(JwtRegisteredClaimNames.Sub, user.Id!),
-                    new Claim(JwtRegisteredClaimNames.UniqueName, user.Username),
-                    new Claim(JwtRegisteredClaimNames.Email, user.Email),
-                    new Claim(ClaimTypes.Role, user.Role)
-                };
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.GetValue<string>("SecretKey")!));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var token = new JwtSecurityToken(
-                issuer: jwtSettings.GetValue<string>("Issuer"),
-                audience: jwtSettings.GetValue<string>("Audience"),
-                claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(jwtSettings.GetValue<int>("ExpiryMinutes")),
-                signingCredentials: creds
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
+        
     }
-
-    public record RegisterRequest(string Username, string Email, string Password);
-    public record LoginRequest(string Username, string Password);
 }
 
 
