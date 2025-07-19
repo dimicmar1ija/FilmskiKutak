@@ -95,6 +95,7 @@ builder.Services.AddScoped<CategoryService>();
 builder.Services.AddScoped<PostService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<JwtTokenService>();
+builder.Services.AddScoped<UserService>();
 
 
 // Add services to the container.

@@ -12,6 +12,14 @@ namespace ForumApi.Services
             _userRepository = userRepository;
         }
 
+        public Task<List<User>> GetAllAsync() => _userRepository.GetAllAsync();
+
+        public Task<User?> GetByIdAsync(string id) => _userRepository.GetByIdAsync(id);
+
+        public Task UpdateAsync(User user) => _userRepository.UpdateAsync(user);
+
+        public Task DeleteAsync(string id) => _userRepository.DeleteAsync(id.ToString());
+
         public Task<User?> GetByUsernameAsync(string username)
         {
             return _userRepository.GetByUsernameAsync(username);

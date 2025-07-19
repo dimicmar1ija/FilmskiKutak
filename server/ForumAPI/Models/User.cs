@@ -24,6 +24,13 @@ namespace ForumAPI.Models
         [BsonElement("createdAt")]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+        [BsonElement("bio")]
+        public string Bio { get; set; } = "Nema biografije";
+
+        [BsonElement("avatarUrl")]
+        public string AvatarUrl { get; set; } = "https://example.com/default-avatar.png";
+
+
         
     }
 }
