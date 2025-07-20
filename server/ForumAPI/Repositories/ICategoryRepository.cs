@@ -8,5 +8,7 @@ namespace ForumAPI.Repositories
         Task<Category> GetByIdAsync(string id);
         Task CreateAsync(Category category);
         Task DeleteAsync(string id);
+        Task<Category?> GetByNameAsync(string name);
+
     }
 }
