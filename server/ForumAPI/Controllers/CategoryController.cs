@@ -49,7 +49,7 @@ namespace ForumAPI.Controllers
             return Ok(category);
         }
 
-         [HttpDelete("{id}")]
+        [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(string id)
         {
             await _service.DeleteAsync(id);

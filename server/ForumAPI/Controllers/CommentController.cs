@@ -47,11 +47,10 @@ namespace ForumAPI.Controllers
         }
 
         [HttpDelete("{commentId}")]
-        //[Authorize] // otkomentari ako koristiš autorizaciju
+        [Authorize] 
         public async Task<IActionResult> DeleteComment(string commentId)
         {
-            // Pretpostavimo da korisnički ID dobijamo iz tokena ili nekog auth sistema:
-            string userId = User.FindFirst("sub")?.Value; // primer iz JWT tokena
+            string userId = User.FindFirst("sub")?.Value; 
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized();
 
@@ -59,7 +58,6 @@ namespace ForumAPI.Controllers
             if (comment == null)
                 return NotFound("Komentar nije pronađen.");
 
-            // Proveri da li je korisnik vlasnik komentara
             if (comment.AuthorId == userId)
             {
                 await _service.DeleteAsync(commentId);
@@ -82,14 +80,23 @@ namespace ForumAPI.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize]
         public async Task<IActionResult> UpdateComment(string id, [FromBody] CommentUpdateDto dto)
         {
             var existing = await _service.GetByIdAsync(id);
             if (existing == null)
                 return NotFound();
+            
+            //id korisnika
+            var userId = User.FindFirst("sub")?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
+            
+            //da li je korisnik autor komentara
+            if (existing.AuthorId != userId)
+                return Forbid();
 
-            // Logika provere da li korisnik sme da menja komentar može ići ovde ili u servisu
-
+            //azuriranje
             existing.Body = dto.Body;
             existing.UpdatedAt = DateTime.UtcNow;
 
