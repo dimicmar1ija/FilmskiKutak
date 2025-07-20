@@ -8,5 +8,19 @@ export function Home(){
 
         <NavLink to="/login">Go to Login Page</NavLink>
         </div>
+
+
+
+        //KORISTITI ovu dokumentaciju
+        // React Docs - bilo sta react
+        // https://react.dev/
+
+        // React Router Docs - za rutiranje
+        // https://reactrouter.com/start/declarative/routing
+
+        // Tanstack Query Docs - // za fetchanje podataka
+        // https://tanstack.com/query/latest/docs/framework/react/overview
+
+        
     );
 }
