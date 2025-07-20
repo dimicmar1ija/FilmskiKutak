@@ -53,7 +53,7 @@ namespace ForumAPI.Controllers
         public async Task<IActionResult> Delete(string id)
         {
             await _service.DeleteAsync(id);
-            return NoContent();
+            return Ok(id);
         }
 
 
