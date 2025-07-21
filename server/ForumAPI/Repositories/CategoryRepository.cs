@@ -31,5 +31,10 @@ namespace ForumAPI.Repositories
         {
             await _categories.DeleteOneAsync(c => c.Id == id);
         }
+        public async Task<Category?> GetByNameAsync(string name)
+        {
+            return await _categories.Find(c => c.Name.ToLower() == name.ToLower()).FirstOrDefaultAsync();
+        }
+
     }
 }

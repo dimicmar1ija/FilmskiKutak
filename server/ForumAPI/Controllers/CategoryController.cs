@@ -23,11 +23,22 @@ namespace ForumAPI.Controllers
             return Ok(cats);
         }
 
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Category>> GetById(string id)
+        {
+            var cat = await _service.GetByIdAsync(id);
+            if (cat == null) return NotFound();
+            return Ok(cat);
+        }
+
         [HttpPost]
-        // [Authorize(Roles = "admin")] 
-        //update: Mislim da moze svako da dodaje kategorije, ne samo admin (Emilija)
         public async Task<IActionResult> Create([FromBody] CategoryCreateDto dto)
         {
+            var existing = await _service.GetByNameAsync(dto.Name);
+            if (existing != null)
+            {
+                return Conflict("Category with the same name already exists.");
+            }
             var category = new Category
             {
                 Name = dto.Name
@@ -37,5 +48,14 @@ namespace ForumAPI.Controllers
             await _service.CreateAsync(category);
             return Ok(category);
         }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(string id)
+        {
+            await _service.DeleteAsync(id);
+            return Ok(id);
+        }
+
+
     }
 }

@@ -16,5 +16,10 @@ namespace ForumAPI.Services
         public Task<Category> GetByIdAsync(string id) => _repo.GetByIdAsync(id);
         public Task CreateAsync(Category cat) => _repo.CreateAsync(cat);
         public Task DeleteAsync(string id) => _repo.DeleteAsync(id);
+       public Task<Category?> GetByNameAsync(string name)
+        {
+            return _repo.GetByNameAsync(name);
+        }
+
     }
 }

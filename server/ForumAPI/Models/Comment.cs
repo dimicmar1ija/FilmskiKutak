@@ -15,4 +15,8 @@ public class Comment
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
+    public List<string> LikedByUserIds { get; set; } = new List<string>();
+    public List<string> DislikedByUserIds { get; set; } = new List<string>();
+     public int LikesCount => LikedByUserIds.Count;
+    public int DislikesCount => DislikedByUserIds.Count;
 }
