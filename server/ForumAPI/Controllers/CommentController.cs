@@ -80,29 +80,34 @@ namespace ForumAPI.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize]
+        [Authorize(Roles = "user,admin")]
         public async Task<IActionResult> UpdateComment(string id, [FromBody] CommentUpdateDto dto)
         {
+            // 1) Nađi komentar
             var existing = await _service.GetByIdAsync(id);
             if (existing == null)
-                return NotFound();
-            
-            //id korisnika
-            var userId = User.FindFirst("sub")?.Value;
+                return NotFound("Komentar nije pronađen.");
+
+            // 2) Izvuci userId iz JWT (claim "sub"); fallback na NameIdentifier ako ti negde tako dolazi
+            var userId = User.FindFirst("sub")?.Value 
+                        ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized();
-            
-            //da li je korisnik autor komentara
-            if (existing.AuthorId != userId)
-                return Forbid();
 
-            //azuriranje
+            // 3) Dozvola: autor komentara ili admin
+            var isAdmin = User.IsInRole("admin");
+            if (!isAdmin && existing.AuthorId != userId)
+                return Forbid("Nemate dozvolu da izmenite ovaj komentar.");
+
+            // 4) Izmena
             existing.Body = dto.Body;
             existing.UpdatedAt = DateTime.UtcNow;
 
             await _service.UpdateComment(existing);
             return NoContent();
         }
+
 
         [HttpPost("{commentId}/like/{userId}")]
         public async Task<IActionResult> LikeComment(string commentId, string userId)

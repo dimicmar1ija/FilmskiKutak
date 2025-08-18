@@ -158,10 +158,11 @@ app.UseHttpsRedirection();
 //redosled je bitan!
 //Autentifikacija i autorizacija moraju biti pre mapiranja kontrolera
 
+app.UseCors("AllowReactApp");
+
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseCors("AllowReactApp");
 //Add Api routes
 
 app.MapControllers();

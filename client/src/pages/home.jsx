@@ -1,4 +1,4 @@
-import { NavLink } from "react-router";
+import { NavLink, Link } from "react-router-dom";
 
 export function Home(){
     return (
@@ -7,6 +7,7 @@ export function Home(){
         <p>This is the home page of our application.</p>
 
         <NavLink to="/login">Go to Login Page</NavLink>
+        <Link to="/test/comments">💬 Test komentara (po PostId)</Link>
         </div>
 
 
