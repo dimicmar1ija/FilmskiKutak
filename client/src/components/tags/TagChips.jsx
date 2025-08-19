@@ -1,10 +1,23 @@
+// client/src/components/tags/TagChips.jsx
 export default function TagChips({ tags = [] }) {
   if (!tags?.length) return null;
+
+  // tags može biti niz ID-jeva ili niz objekata { id, name }
+  const renderName = (t) => (typeof t === "string" ? t : (t.name || t.id));
+
   return (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
       {tags.map((t) => (
-        <span key={t.id || t} style={{ padding: "2px 8px", borderRadius: 999, background: "#eee", fontSize: 12 }}>
-          {t.name || t}
+        <span
+          key={typeof t === "string" ? t : (t.id || t.name)}
+          style={{
+            padding: "2px 8px",
+            borderRadius: 999,
+            background: "#eee",
+            fontSize: 12
+          }}
+        >
+          {renderName(t)}
         </span>
       ))}
     </div>
