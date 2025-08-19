@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ForumAPI.Dtos;
 using ForumApi.Services;
+using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace ForumAPI.Controllers
 {
@@ -50,7 +52,10 @@ namespace ForumAPI.Controllers
         [Authorize] 
         public async Task<IActionResult> DeleteComment(string commentId)
         {
-            string userId = User.FindFirst("sub")?.Value; 
+            string userId = User.FindFirst("sub")?.Value
+                ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                ?? System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub;
+
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized();
 
@@ -60,7 +65,7 @@ namespace ForumAPI.Controllers
 
             if (comment.AuthorId == userId)
             {
-                await _service.DeleteAsync(commentId);
+                await _service.DeleteCommentTreeAsync(commentId);
                 return NoContent();
             }
 
@@ -71,7 +76,7 @@ namespace ForumAPI.Controllers
 
             if (post.AuthorId == userId)
             {
-                await _service.DeleteAsync(commentId);
+                await _service.DeleteCommentTreeAsync(commentId);
                 return NoContent();
             }
 

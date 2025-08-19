@@ -9,5 +9,7 @@ namespace ForumAPI.Repositories
         Task CreateAsync(Comment comment);
         Task UpdateAsync(Comment comment);
         Task DeleteAsync(string id);
+        Task<List<string>> GetChildrenIdsAsync(string parentId);
+        Task DeleteManyByIdsAsync(IEnumerable<string> ids);
     }
 }

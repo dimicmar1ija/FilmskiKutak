@@ -102,7 +102,7 @@ namespace ForumAPI.Services
             }
             return false; // Već je dislajkovao
         }
-        
+
         public async Task<bool> UnlikeComment(string commentId, string userId)
         {
             var comment = await _repo.GetByIdAsync(commentId);
@@ -130,6 +130,26 @@ namespace ForumAPI.Services
             }
             return false; // Nije dislajkovao, pa ne može da "undislike"
         }
+        
+        public async Task DeleteCommentTreeAsync(string rootId)
+        {
+            var toDelete = new List<string> { rootId };
+            var q = new Queue<string>();
+            q.Enqueue(rootId);
 
+            while (q.Count > 0)
+            {
+                var current = q.Dequeue();
+                var children = await _repo.GetChildrenIdsAsync(current);
+
+                foreach (var childId in children)
+                {
+                    toDelete.Add(childId);
+                    q.Enqueue(childId);
+                }
+            }
+
+            await _repo.DeleteManyByIdsAsync(toDelete);
+        }
     }
 }

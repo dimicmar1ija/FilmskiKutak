@@ -10,6 +10,10 @@ namespace ForumAPI.Repositories
         public CommentRepository(IMongoDatabase database)
         {
             _comments = database.GetCollection<Comment>("Comments");
+
+            _comments.Indexes.CreateOne(
+                new CreateIndexModel<Comment>(
+                    Builders<Comment>.IndexKeys.Ascending(c => c.ParentCommentId)));
         }
 
         public async Task<List<Comment>> GetByPostIdAsync(string postId)
@@ -35,6 +39,18 @@ namespace ForumAPI.Repositories
         public async Task DeleteAsync(string id)
         {
             await _comments.DeleteOneAsync(c => c.Id == id);
+        }
+
+          public async Task<List<string>> GetChildrenIdsAsync(string parentId)
+        {
+            var filter = Builders<Comment>.Filter.Eq(c => c.ParentCommentId, parentId);
+            return await _comments.Find(filter).Project(c => c.Id).ToListAsync();
+        }
+
+        public Task DeleteManyByIdsAsync(IEnumerable<string> ids)
+        {
+            var filter = Builders<Comment>.Filter.In(c => c.Id, ids);
+            return _comments.DeleteManyAsync(filter);
         }
     }
 }
