@@ -1,27 +1,34 @@
 import { NavLink, Link } from "react-router-dom";
+import { usePosts } from "../context/PostContext";
+import PostCard from "../components/PostCard";
 
-export function Home(){
-    return (
-        <div>
-        <h1>Welcome to the Home Page</h1>
-        <p>This is the home page of our application.</p>
+export function Home() {
+  const { posts } = usePosts();
 
-        <NavLink to="/login">Go to Login Page</NavLink>
-        <Link to="/test/comments">💬 Test komentara (po PostId)</Link>
-        </div>
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">Welcome to the Home Page</h1>
+      <p className="mb-4">This is the home page of our application.</p>
 
+      <NavLink to="/login" className="text-blue-500 underline mr-4">
+        Go to Login Page
+      </NavLink>
 
+      <Link to="/test/comments" className="text-blue-500 underline mr-4">
+        💬 Test komentara (po PostId)
+      </Link>
 
-        //KORISTITI ovu dokumentaciju
-        // React Docs - bilo sta react
-        // https://react.dev/
+      <Link to="/create-post" className="text-blue-500 underline">
+        ➕ Dodaj post
+      </Link>
 
-        // React Router Docs - za rutiranje
-        // https://reactrouter.com/start/declarative/routing
-
-        // Tanstack Query Docs - // za fetchanje podataka
-        // https://tanstack.com/query/latest/docs/framework/react/overview
-
-        
-    );
+      <div className="mt-6 space-y-4">
+        {posts.length === 0 ? (
+          <p className="text-gray-500">Nema postova za prikaz.</p>
+        ) : (
+          posts.map((post, i) => <PostCard key={i} post={post} />)
+        )}
+      </div>
+    </div>
+  );
 }
