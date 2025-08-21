@@ -8,25 +8,22 @@ import { Routes, Route } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
 import { useAuth } from "./context/AuthContext";
-import Layout from './components/layout';
+import Layout from './components/Layout';
 import { CreatePost } from "./pages/CreatePost";  
-
-
 
 function App() {
   const { isAuthenticated } = useAuth();
-  const fakeAuth = true
 
   return (
     <Routes>
-      {/* Public routes */}
+      {/* Javne rute */}
       <Route element={<PublicRoute isAuthenticated={isAuthenticated} />}>
         <Route path="/" element={<Login />} />
         <Route path="login" element={<Login />} />
         <Route path="register" element={<Register />} />
       </Route>
 
-      {/* Protected routes */}
+      {/* Zaštićene rute */}
       <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />}>
         <Route element={<Layout />}>
           <Route path="home" element={<Home />} />
