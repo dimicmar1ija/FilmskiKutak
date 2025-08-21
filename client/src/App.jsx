@@ -16,18 +16,17 @@ import { CreatePost } from "./pages/CreatePost";
 function App() {
   const { isAuthenticated } = useAuth();
 
-    const fakeAuth = true;
   return (
     <Routes>
       {/* Public routes */}
-      <Route element={<PublicRoute isAuthenticated={fakeAuth} />}>
+      <Route element={<PublicRoute isAuthenticated={isAuthenticated} />}>
         <Route path="/" element={<Login />} />
         <Route path="login" element={<Login />} />
         <Route path="register" element={<Register />} />
       </Route>
 
       {/* Protected routes */}
-      <Route element={<ProtectedRoute isAuthenticated={fakeAuth} />}>
+      <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />}>
         <Route element={<Layout />}>
           <Route path="home" element={<Home />} />
           <Route path="test/comments" element={<TestComments />} />
