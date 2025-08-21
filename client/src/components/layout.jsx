@@ -3,13 +3,14 @@
 import { Outlet } from "react-router-dom";
 import Header from "./Header";
 
-const Layout = () => {
+function Layout() {
   return (
-    <div>
+    <div className="flex flex-col min-h-screen">
       <Header />
-      <Outlet />
+      <main className="flex-1 p-4">
+        <Outlet />
+      </main>
     </div>
   );
-};
-
+}
 export default Layout;

@@ -15,6 +15,7 @@ import { CreatePost } from "./pages/CreatePost";
 
 function App() {
   const { isAuthenticated } = useAuth();
+  const fakeAuth = true
 
   return (
     <Routes>
