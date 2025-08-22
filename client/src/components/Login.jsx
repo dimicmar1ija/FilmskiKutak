@@ -1,10 +1,9 @@
-// components/Login.js
 import React, { useState, useContext } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import axios from "../api/axiosInstance";
-import "./Login.css"; // Import the CSS
+import "../app.css"; // use global app.css
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -27,28 +26,31 @@ const Login = () => {
   };
 
   return (
-    <div className="login-container">
-      <form className="login-form" onSubmit={handleSubmit}>
+    <div className="form-container">
+      <form className="form-box" onSubmit={handleSubmit}>
         <h2>Login</h2>
         <input
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           placeholder="Username"
+          required
         />
         <input
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Password"
+          required
         />
         <button type="submit" disabled={mutation.isLoading}>
           {mutation.isLoading ? "Logging in..." : "Login"}
         </button>
         <button
           type="button"
+          className="secondary-button"
           onClick={() => navigate("/register")}
         >
-        Go to Register
+          Go to Register
         </button>
       </form>
     </div>
