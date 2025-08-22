@@ -34,12 +34,6 @@ namespace ForumApi.Controllers
             if (user == null)
                 return NotFound();
 
-            var currentUserId = User.FindFirst("id")?.Value ?? "0";
-            var isAdmin = User.IsInRole("admin");
-
-            if (currentUserId != id && !isAdmin)
-                return Forbid();
-
             return Ok(user);
         }
 
