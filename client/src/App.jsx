@@ -10,6 +10,7 @@ import PublicRoute from './components/PublicRoute';
 import { useAuth } from "./context/AuthContext";
 import Layout from './components/Layout';
 import { CreatePost } from "./pages/CreatePost";  
+import { MyProfile } from './components/MyProfile';
 
 function App() {
   const { isAuthenticated } = useAuth();
@@ -30,6 +31,7 @@ function App() {
           <Route path="test/comments" element={<TestComments />} />
           <Route path="admin/categories" element={<AdminCategories />} />
           <Route path="create-post" element={<CreatePost />} />
+          <Route path="profile" element={<MyProfile />} />
         </Route>
       </Route>
     </Routes>
