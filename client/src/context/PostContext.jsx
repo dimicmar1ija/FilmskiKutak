@@ -10,31 +10,33 @@ export const PostProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Učitavanje postova sa API-ja
-  useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        setLoading(true);
-        const res = await axios.get("http://localhost:5132/api/Post");
-        setPosts(res.data);  // Backend vraća listu postova
-      } catch (err) {
-        console.error("Greška pri učitavanju postova:", err);
-        setError("Ne mogu da učitam postove");
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Funkcija za učitavanje postova sa API-ja
+  const fetchPosts = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get("http://localhost:5132/api/Post");
+      setPosts(res.data); // Backend vraća listu postova
+      setError(null);
+    } catch (err) {
+      console.error("Greška pri učitavanju postova:", err);
+      setError("Ne mogu da učitam postove");
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  // Automatsko učitavanje postova pri mount-u
+  useEffect(() => {
     fetchPosts();
   }, []);
 
-  // Dodavanje novog posta lokalno (nakon uspešnog POST request-a)
+  // Dodavanje novog posta lokalno (bez ponovnog fetch-a)
   const addPost = (newPost) => {
     setPosts((prev) => [newPost, ...prev]);
   };
 
   return (
-    <PostContext.Provider value={{ posts, addPost, loading, error }}>
+    <PostContext.Provider value={{ posts, addPost, fetchPosts, loading, error }}>
       {children}
     </PostContext.Provider>
   );

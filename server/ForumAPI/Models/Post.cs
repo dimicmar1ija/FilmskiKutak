@@ -7,29 +7,31 @@ public class Post
 {
     [BsonId]
     [BsonRepresentation(BsonType.ObjectId)]
-    public string Id { get; set; }
+    public required string Id { get; set; }
 
-    [BsonElement("title")]
-    public string Title { get; set; }
-
-    [BsonElement("body")]
-    public string Body { get; set; }
-
-    [BsonElement("authorId")]
     [BsonRepresentation(BsonType.ObjectId)]
-    public string AuthorId { get; set; }
+    public required string AuthorId { get; set; }
 
-    [BsonElement("tags")]
-    public List<string> Tags { get; set; } = new List<string>();
+    public required string Title { get; set; }
 
-    [BsonElement("createdAt")]
+    public required string Body { get; set; }
+
+    // Lista URL-ova za slike i video
+    public List<string> MediaUrls { get; set; } = new();
+
+    // Lista tag ID-jeva
+    public List<string> TagsIds { get; set; } = new();
+
+    // Lista ID-jeva korisnika koji su lajkovali post
+    public List<string> LikedByUserIds { get; set; } = new();
+
     [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
     public DateTime CreatedAt { get; set; }
 
-    [BsonElement("updatedAt")]
     [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
     public DateTime UpdatedAt { get; set; }
 
-    [BsonElement("commentsCount")]
-    public int CommentsCount { get; set; }
+    // Automatski se računa da li je post izmenjen
+    [BsonIgnore]
+    public bool IsEdited => CreatedAt != UpdatedAt;
 }

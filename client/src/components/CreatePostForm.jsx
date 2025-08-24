@@ -127,6 +127,7 @@ export default function CreatePostForm({ onPost, onCancel }) {
     const tagIdsClean = selectedTagIds.map(String).filter(Boolean);
 
     try {
+      const now = new Date(); // trenutni datum i vreme
       const payload = {
         id: generateObjectId(),
         authorId: String(sub).trim(),
@@ -134,9 +135,11 @@ export default function CreatePostForm({ onPost, onCancel }) {
         body: body?.trim() || "",
         mediaUrls: urls,
         tagsIds: tagIdsClean,
+        createdAt: now,   // vreme kreiranja
+        updatedAt: now    // pri kreiranju isto kao createdAt
       };
 
-      const created = await apiCreatePost(payload); // token se dodaje automatski iz axiosInstance
+      const created = await apiCreatePost(payload);
       onPost?.(created);
 
       // Reset forme

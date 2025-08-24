@@ -1,11 +1,13 @@
 import { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import { usePosts } from "../context/PostContext"; // uvezi PostContext
 import CreatePostForm from "../components/CreatePostForm"; // uvezi formu
 
 const Header = () => {
   const navigate = useNavigate();
   const { logout } = useContext(AuthContext);
+  const { addPost } = usePosts(); // funkcija za dodavanje posta u context
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -62,8 +64,11 @@ const Header = () => {
             </button>
             <h2 className="text-xl font-bold mb-4">Kreiraj novi post</h2>
             <CreatePostForm
-              onPost={() => setIsModalOpen(false)}   // zatvara modal nakon uspešnog posta
-              onCancel={() => setIsModalOpen(false)} // zatvara modal klikom na Odustani
+              onPost={(newPost) => {
+                addPost(newPost);  // Dodaje novi post u PostContext
+                setIsModalOpen(false); // Zatvara modal
+              }}
+              onCancel={() => setIsModalOpen(false)}
             />
           </div>
         </div>
