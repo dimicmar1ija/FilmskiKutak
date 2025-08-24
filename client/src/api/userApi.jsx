@@ -19,3 +19,7 @@ export const getUsersPreviews = () => {
 export const getUserById = (id) => {
   return axiosInstance.get(`/User/${id}`).then(r => r.data);
 }
+
+export const deleteUser = (id) => {
+  return axiosInstance.delete(`/User/${id}`).then(r => r.data);
+}

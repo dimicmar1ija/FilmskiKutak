@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getUsersPreviews } from "../api/userApi";
+import { deleteUser, getUsersPreviews } from "../api/userApi";
 import { Link } from "react-router";
 import { useAuth } from "../context/AuthContext";
 
@@ -17,9 +17,7 @@ export const UsersList = () => {
 
   const handleDelete = async (userId) => {
     try {
-      // Call your API to delete the user
-      await fetch(`/api/users/${userId}`, { method: "DELETE" });
-      // Update local state after deletion
+      await deleteUser(userId);
       setUsers((prevUsers) => prevUsers.filter((u) => u.id !== userId));
     } catch (err) {
       console.error("Failed to delete user:", err);
