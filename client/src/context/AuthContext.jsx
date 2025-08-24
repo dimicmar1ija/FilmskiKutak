@@ -9,12 +9,24 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem("jwt") || null);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
-  // Fetch user profile by decoding token
-  const fetchUser = async (jwt) => {
+  const decodeToken = (jwt) => {
     try {
       const decoded = jwtDecode(jwt);
-      const userData = await getUserProfile(decoded.sub);
+      const roleClaim = decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+      setIsAdmin(roleClaim === "admin");
+      return decoded;
+    } catch (err) {
+      console.error("Failed to decode JWT:", err);
+      setIsAdmin(false);
+      return null;
+    }
+  };
+
+  const fetchUser = async (sub) => {
+    try {
+      const userData = await getUserProfile(sub);
       setUser(userData);
     } catch (err) {
       console.error("Failed to fetch user profile:", err);
@@ -22,25 +34,30 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Called when user logs in
   const login = async (jwt) => {
     setToken(jwt);
     localStorage.setItem("jwt", jwt);
-    await fetchUser(jwt);
+
+    const decoded = decodeToken(jwt);
+    if (decoded) {
+      await fetchUser(decoded.sub);
+    }
   };
 
-  // Called when user logs out
   const logout = () => {
     setToken(null);
     setUser(null);
+    setIsAdmin(false);
     localStorage.removeItem("jwt");
   };
 
-  // Auto-load user on refresh if token exists
   useEffect(() => {
     const loadUser = async () => {
       if (token) {
-        await fetchUser(token);
+        const decoded = decodeToken(token);
+        if (decoded) {
+          await fetchUser(decoded.sub);
+        }
       }
       setLoading(false);
     };
@@ -54,6 +71,7 @@ export const AuthProvider = ({ children }) => {
         user,
         login,
         logout,
+        isAdmin,
         isAuthenticated: !!token,
         loading,
       }}

@@ -11,6 +11,7 @@ import { useAuth } from "./context/AuthContext";
 import Layout from './components/Layout';
 import { CreatePost } from "./pages/CreatePost";  
 import { MyProfile } from './components/MyProfile';
+import { UserProfile } from './components/UserProfile';
 
 function App() {
   const { isAuthenticated } = useAuth();
@@ -32,6 +33,7 @@ function App() {
           <Route path="admin/categories" element={<AdminCategories />} />
           <Route path="create-post" element={<CreatePost />} />
           <Route path="profile" element={<MyProfile />} />
+          <Route path="/users/:id" element={<UserProfile />} />
         </Route>
       </Route>
     </Routes>
