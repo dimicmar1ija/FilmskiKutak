@@ -468,13 +468,16 @@ export default function PostView({ post }) {
         <button style={commentLikeButtonStyles} onClick={handleToggleComments}>
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-message-circle"><path d="M7.9 20A9.32 9.32 0 0 1 4 16c0-4.64 3.5-8.41 8-8.41s8 3.77 8 8.41c0 2.22-.84 4.31-2.42 5.86L19 23l-2-4.38a9.32 9.32 0 0 1-9.1 1.38Z"/></svg>
           <span style={{ fontSize: '0.875rem' }}>Comments</span>
+          <span style={{ fontSize: '0.875rem' }}>
+            Comments{commentsCount ? ` (${commentsCount})` : ""}
+          </span>
         </button>
       </div>
 
       {/* Komentari Sekcija (prikazuje se na klik) */}
       {showComments && (
         <div style={commentsSectionStyle}>
-          <CommentThread postId={post.id} />
+          <CommentThread postId={post.id} onCountChange={setCommentsCount} />
         </div>
       )}
     </div>

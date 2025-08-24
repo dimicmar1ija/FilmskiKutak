@@ -14,7 +14,7 @@ import {
 import { AuthContext } from "../../context/AuthContext";
 import { getSubFromToken } from "../../utils/jwt";
 
-export default function CommentThread({ postId }) {
+export default function CommentThread({ postId, onCountChange }) {
   const [tree, setTree] = useState([]);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState(null);
