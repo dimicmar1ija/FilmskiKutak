@@ -10,3 +10,8 @@ export const getUserProfile = async (userId) => {
     throw error;
   }
 };
+
+
+export const getUsersPreviews = () => {
+  return axiosInstance.get(`/User/previews`).then(r => r.data);
+}
