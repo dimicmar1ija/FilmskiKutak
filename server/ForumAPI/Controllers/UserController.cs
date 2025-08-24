@@ -16,15 +16,44 @@ namespace ForumApi.Controllers
             _userService = userService;
         }
 
+        [Authorize()]
+        [HttpGet("previews")]
+        public async Task<IActionResult> GetUserPreviews()
+        {
+            var users = await _userService.GetAllAsync();
+
+            var previews = users.Select(u => new UserPreviewDto
+            {
+                Id = u.Id,
+                Username = u.Username,
+                AvatarUrl = u.AvatarUrl
+            });
+
+            return Ok(previews);
+        }
+
         // GET: api/user
         [Authorize(Roles = "admin")]
         [HttpGet]
         public async Task<IActionResult> GetAllUsers()
         {
             var users = await _userService.GetAllAsync();
-            return Ok(users);
+
+            var userDtos = users.Select(u => new UserDto
+            {
+                Id = u.Id,
+                Username = u.Username,
+                Email = u.Email,
+                Role = u.Role,
+                CreatedAt = u.CreatedAt,
+                Bio = u.Bio,
+                AvatarUrl = u.AvatarUrl
+            });
+
+            return Ok(userDtos);
         }
 
+        
         // GET: api/user/{id}
         [Authorize]
         [HttpGet("{id}")]
@@ -34,7 +63,18 @@ namespace ForumApi.Controllers
             if (user == null)
                 return NotFound();
 
-            return Ok(user);
+            var userDto = new UserDto
+            {
+                Id = user.Id,
+                Username = user.Username,
+                Email = user.Email,
+                Role = user.Role,
+                CreatedAt = user.CreatedAt,
+                Bio = user.Bio,
+                AvatarUrl = user.AvatarUrl
+            };
+
+            return Ok(userDto);
         }
 
         // PUT: api/user/{id}
@@ -71,5 +111,6 @@ namespace ForumApi.Controllers
             await _userService.DeleteAsync(id);
             return Ok("User deleted successfully.");
         }
+
     }
 }
