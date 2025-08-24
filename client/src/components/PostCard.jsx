@@ -1,37 +1,11 @@
 import React, { useState, useEffect } from "react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
+import CommentThread from "../components/comments/CommentThread";
+import useCategoriesMap from "../hooks/useCategoriesMap";
+
 
 dayjs.extend(relativeTime);
-
-// Mock data for demonstration
-const mockComments = [
-  { 
-    id: 1, 
-    author: "Korisnik 1", 
-    text: "Odličan post! Sviđa mi se tema.", 
-    createdAt: new Date(), 
-    likedByUserIds: [], 
-    replies: [] 
-  },
-  { 
-    id: 2, 
-    author: "Korisnik 2", 
-    text: "Da li planirate da dodate još ovakvih postova?", 
-    createdAt: new Date(Date.now() - 3600000), 
-    likedByUserIds: ['user1'],
-    replies: [
-      {
-        id: 3,
-        author: "Korisnik 3",
-        text: "Ja se nadam! Volim ovu vrstu sadržaja.",
-        createdAt: new Date(Date.now() - 1800000),
-        likedByUserIds: [],
-        replies: []
-      }
-    ]
-  },
-];
 
 // Helper function to find a comment and its parent by ID
 const findComment = (comments, id) => {
@@ -183,10 +157,10 @@ function Comment({ comment, onAddReply, onToggleLike }) {
 }
 
 export default function PostView({ post }) {
+  const { map: categoriesMap } = useCategoriesMap();
   const [showComments, setShowComments] = useState(false);
-  const [comments, setComments] = useState(mockComments);
-  const [newComment, setNewComment] = useState("");
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
+  const [commentsCount, setCommentsCount] = useState(0);
 
   const handleToggleComments = () => {
     setShowComments(!showComments);
@@ -387,10 +361,10 @@ export default function PostView({ post }) {
         {/* Tagovi (ažurirano) */}
         {post.tagsIds.length > 0 && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center', marginTop: '-0.25rem' }}>
-            {post.tagsIds.map((tag, i) => (
+            {post.tagsIds.map((tagId, i) => (
               <button
                 key={i}
-                onClick={() => console.log(`Kliknuli ste na tag: ${tag}`)}
+                onClick={() => console.log(`Kliknuli ste na tag: ${tagId}`)}
                 style={{ 
                   fontSize: '0.75rem', 
                   backgroundColor: '#f0f4f8', 
@@ -407,7 +381,7 @@ export default function PostView({ post }) {
                 onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#e2e8f0'; }}
                 onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#f0f4f8'; }}
               >
-                {tag}
+                {categoriesMap[tagId] ?? tagId}
               </button>
             ))}
           </div>
@@ -493,44 +467,17 @@ export default function PostView({ post }) {
         </button>
         <button style={commentLikeButtonStyles} onClick={handleToggleComments}>
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-message-circle"><path d="M7.9 20A9.32 9.32 0 0 1 4 16c0-4.64 3.5-8.41 8-8.41s8 3.77 8 8.41c0 2.22-.84 4.31-2.42 5.86L19 23l-2-4.38a9.32 9.32 0 0 1-9.1 1.38Z"/></svg>
-          <span style={{ fontSize: '0.875rem' }}>{comments.length} Comments</span>
+          <span style={{ fontSize: '0.875rem' }}>Comments</span>
+          <span style={{ fontSize: '0.875rem' }}>
+            Comments{commentsCount ? ` (${commentsCount})` : ""}
+          </span>
         </button>
       </div>
 
       {/* Komentari Sekcija (prikazuje se na klik) */}
       {showComments && (
         <div style={commentsSectionStyle}>
-          {/* Forma za novi komentar */}
-          <form onSubmit={handleAddComment} style={commentFormStyle}>
-            <input
-              type="text"
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Napišite komentar..."
-              style={commentInputStyle}
-            />
-            <button type="submit" style={commentButtonStyle}>
-              Objavi
-            </button>
-          </form>
-
-          {/* Lista komentara */}
-          {comments.length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {comments.map((comment) => (
-                <Comment 
-                  key={comment.id} 
-                  comment={comment} 
-                  onAddReply={handleAddReply} 
-                  onToggleLike={handleToggleLike} 
-                />
-              ))}
-            </div>
-          ) : (
-            <p style={{ textAlign: 'center', color: '#6b7280' }}>
-              Nema još komentara. Budite prvi!
-            </p>
-          )}
+          <CommentThread postId={post.id} onCountChange={setCommentsCount} />
         </div>
       )}
     </div>

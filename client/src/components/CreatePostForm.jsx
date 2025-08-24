@@ -1,54 +1,188 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useContext } from "react";
+import { getAllCategories, createCategory } from "../api/categoryApi"; 
+import { createPost as apiCreatePost } from "../api/postApi";           
+import { AuthContext } from "../context/AuthContext";                   
+import { jwtDecode } from "jwt-decode";
+import http from "../api/axiosInstance";
+
 
 export default function CreatePostForm({ onPost }) {
+  const { token } = useContext(AuthContext);                            
+  const authorId = token ? (jwtDecode(token)?.sub ?? null) : null; 
+
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [mediaUrls, setMediaUrls] = useState("");
-  const [link, setLink] = useState("");
-  const [tags, setTags] = useState([]);
-  const [tagInput, setTagInput] = useState("");
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    const newPost = {
-      authorId: "currentUser",
-      title,
-      body,
-      mediaUrls: mediaUrls
-        .split(",")
-        .map((url) => url.trim())
-        .filter((url) => url !== ""),
-      link: link.trim() || null,
-      tagsIds: tags,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      likedByUserIds: [],
+  const [categories, setCategories] = useState([]);     // { id, name } iz baze
+  const [selectedTagIds, setSelectedTagIds] = useState([]); // niz ObjectId stringova
+  const [tagInput, setTagInput] = useState("");         // koristi se kao "Novi tag"
+  const [loadingCats, setLoadingCats] = useState(false);
+  const [posting, setPosting] = useState(false);
+  const [err, setErr] = useState(null);
+  
+  useEffect(() => {
+    const load = async () => {
+      setLoadingCats(true);
+      try {
+        const data = await getAllCategories();
+        setCategories(data);
+      } 
+      finally {
+        setLoadingCats(false);
+      }
     };
+    load();
+  }, []);
 
-    onPost(newPost);
-    // Reset form
-    setTitle("");
-    setBody("");
-    setMediaUrls("");
-    setLink("");
-    setTags([]);
-    setTagInput("");
+  const toggleTag = (id) => {
+    setSelectedTagIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
   };
 
-  const handleAddTag = (e) => {
-    if (e.key === "Enter" && tagInput.trim() !== "") {
-      e.preventDefault();
-      if (!tags.includes(tagInput.trim())) {
-        setTags([...tags, tagInput.trim()]);
+  // helper: pronađi kategoriju po imenu (case-insensitive)
+  const byName = (arr, name) =>
+    arr.find((c) => c.name.toLowerCase() === name.toLowerCase());
+
+  // kreiraj tag ako ne postoji; vrati njegov ID; auto-selektuj ga
+  const ensureTagCreated = async (name) => {
+    const trimmed = name.trim();
+    if (!trimmed) return null;
+
+    // 1) Ako postoji u već učitanim kategorijama — selektuj i gotovo
+    const existing = byName(categories, trimmed);
+    if (existing) {
+      setSelectedTagIds((prev) =>
+        prev.includes(existing.id) ? prev : [...prev, existing.id]
+      );
+      return existing.id;
+    }
+
+    // 2) Probaj da ga kreiraš
+    try {
+      const created = await createCategory({ name: trimmed });
+      setCategories((prev) => [...prev, created]);
+      setSelectedTagIds((prev) => [...prev, created.id]);
+      return created.id;
+    } catch (err) {
+      // 409 = već postoji u bazi (nismo ga imali u state-u) -> refetch & selektuj
+      if (err?.response?.status === 409) {
+        const latest = await getAllCategories();
+        setCategories(latest || []);
+        const cat = byName(latest || [], trimmed);
+        if (cat) {
+          setSelectedTagIds((prev) =>
+            prev.includes(cat.id) ? prev : [...prev, cat.id]
+          );
+          return cat.id;
+        }
       }
-      setTagInput("");
+      throw err;
     }
   };
 
-  const removeTag = (tagToRemove) => {
-    setTags(tags.filter((t) => t !== tagToRemove));
+const handleAddTag = async (e) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    if (!tagInput.trim()) return;
+
+    try {
+      await ensureTagCreated(tagInput);
+      setTagInput("");
+    } catch {
+      alert("Greška pri dodavanju taga.");
+    }
   };
+
+  const removeTag = (id) => {
+    setSelectedTagIds(prev => prev.filter(x => x !== id));
+  };
+
+function generateObjectId() {
+  const hex = [];
+  for (let i = 0; i < 24; i++) {
+    hex.push(Math.floor(Math.random() * 16).toString(16));
+  }
+  return hex.join("");
+}
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setPosting(true);
+  setErr(null);
+
+  // validacija
+  if (!token) {
+    setPosting(false);
+    setErr("Niste ulogovani.");
+    return;
+  }
+
+  let sub;
+  try {
+    sub = jwtDecode(token)?.sub;
+  } catch { /* no-op */ }
+
+  if (!sub || !String(sub).trim()) {
+    setPosting(false);
+    setErr("Ne mogu da očitam authorId iz tokena.");
+    return;
+  }
+
+  if (!title.trim()) {
+    setPosting(false);
+    setErr("Naslov (title) je obavezan.");
+    return;
+  }
+
+  const urls = mediaUrls
+    .split(",")
+    .map((u) => u.trim())
+    .filter(Boolean);
+
+  const tagIdsClean = (selectedTagIds || [])
+    .map((x) => (x ?? "").toString().trim())
+    .filter(Boolean);
+
+  try {
+    const nowIso = new Date().toISOString();
+    const payload = {
+      id: generateObjectId(),       // backend traži i id
+      authorId: String(sub).trim(), // iz JWT-a
+      title: title.trim(),
+      body: body?.trim() || "",
+      mediaUrls: urls,
+      tagsIds: tagIdsClean,
+      createdAt: nowIso,
+      updatedAt: nowIso,
+      likedByUserIds: []
+    };
+
+    const created = await apiCreatePost(payload, token);
+    onPost?.(created);
+
+    // reset forme
+    setTitle("");
+    setBody("");
+    setMediaUrls("");
+    setSelectedTagIds([]);
+    setTagInput("");
+  } catch (ex) {
+    const data = ex?.response?.data;
+    console.error("POST /post error:", data || ex);
+    const msg =
+      (data?.errors &&
+        Object.entries(data.errors)
+          .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`)
+          .join(" | ")) ||
+      data?.title ||
+      data?.detail ||
+      "Nisam uspeo da sačuvam post.";
+    setErr(msg);
+  } finally {
+    setPosting(false);
+  }
+};
 
   const formStyle = {
     width: '100%',
@@ -95,16 +229,17 @@ export default function CreatePostForm({ onPost }) {
     transition: 'background-color 0.2s',
   };
 
-  const tagStyle = {
-    display: 'flex',
+  const tagPill = (active) => ({
+    display: 'inline-flex',
     alignItems: 'center',
-    backgroundColor: '#dbeafe',
-    color: '#1e40af',
+    backgroundColor: active ? '#dbeafe' : '#f4f4f5',
+    color: active ? '#1e40af' : '#111827',
     padding: '0.25rem 0.75rem',
     borderRadius: '9999px',
     fontSize: '0.875rem',
-    cursor: 'pointer',
-  };
+    border: '1px solid #d1d5db',
+    cursor: 'pointer'
+  });
 
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-start', minHeight: '100vh', backgroundColor: '#f3f4f6', padding: '1rem' }}>
@@ -156,51 +291,47 @@ export default function CreatePostForm({ onPost }) {
           </div>
         </div>
 
-        {/* Link */}
-        <input
-          type="text"
-          placeholder="Link to a page (optional)"
-          value={link}
-          onChange={(e) => setLink(e.target.value)}
-          style={{ ...inputStyle, outline: 'none', boxShadow: '0 0 0 2px #bfdbfe' }}
-        />
+        {/* TAGOVI iz baze */}
+        <div style={{ display: 'grid', gap: 8 }}>
+          <div style={{ fontWeight: 600 }}>Tagovi</div>
+          {loadingCats ? (
+            <div>Učitavanje tagova…</div>
+          ) : (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+              {categories.map(c => {
+                const active = selectedTagIds.includes(c.id);
+                return (
+                  <span
+                    key={c.id}
+                    onClick={() => toggleTag(c.id)}
+                    style={tagPill(active)}
+                    title={active ? "Ukloni" : "Dodaj"}
+                  >
+                    {c.name} {active ? "✓" : ""}
+                  </span>
+                );
+              })}
+              {!categories.length && <div>Nema postojećih tagova.</div>}
+            </div>
+          )}
 
-        {/* Tags */}
-        <div>
+          {/* Novi tag – Enter za kreiranje i auto-selekt */}
           <input
             type="text"
-            placeholder="Add a tag and press Enter"
+            placeholder="Dodaj novi tag i pritisni Enter"
             value={tagInput}
             onChange={(e) => setTagInput(e.target.value)}
             onKeyDown={handleAddTag}
-            style={{ ...inputStyle, outline: 'none', boxShadow: '0 0 0 2px #bfdbfe' }}
+            style={{ ...inputStyle, boxShadow: '0 0 0 2px #bfdbfe' }}
           />
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
-            {tags.map((tag) => (
-              <span
-                key={tag}
-                style={tagStyle}
-                onClick={() => removeTag(tag)}
-              >
-                {tag} &times;
-              </span>
-            ))}
-          </div>
         </div>
-        
-        {/* Submit */}
+
+        {err && <div style={{ color: "#e11d48" }}>{err}</div>}
+
         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '1rem', paddingTop: '1rem' }}>
-          <button
-            type="button"
-            style={{ ...saveDraftButtonStyle, '&:hover': { backgroundColor: '#d1d5db' } }}
-          >
-            Save Draft
-          </button>
-          <button
-            type="submit"
-            style={{ ...submitButtonStyle, '&:hover': { backgroundColor: '#2563eb' } }}
-          >
-            Post
+          <button type="button" style={saveDraftButtonStyle}>Save Draft</button>
+          <button type="submit" style={submitButtonStyle} disabled={posting}>
+            {posting ? "Post..." : "Post"}
           </button>
         </div>
       </form>
