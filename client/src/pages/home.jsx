@@ -18,10 +18,6 @@ export function Home() {
         💬 Test komentara (po PostId)
       </Link>
 
-      <Link to="/create-post" className="text-blue-500 underline">
-        ➕ Dodaj post
-      </Link>
-
       <div className="mt-6 space-y-4">
         {posts.length === 0 ? (
           <p className="text-gray-500">Nema postova za prikaz.</p>

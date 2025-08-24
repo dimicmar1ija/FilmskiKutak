@@ -1,12 +1,13 @@
 import axios from "./axiosInstance";
 
-export const createPost = (payload, token) =>
-  axios.post("/post", payload, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  }).then(r => r.data);
+// kreiranje posta
+export const createPost = (payload) =>
+  axios.post("/Post", payload).then(r => r.data);
 
+// dohvatanje svih postova
 export const getPosts = () =>
-  axios.get("/post").then(r => r.data);
+  axios.get("/Post").then(r => r.data);
 
+// dohvatanje posta po ID-u
 export const getPostById = (id) =>
-  axios.get(`/post/${id}`).then(r => r.data);
+  axios.get(`/Post/${id}`).then(r => r.data);
