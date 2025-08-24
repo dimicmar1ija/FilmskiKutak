@@ -22,12 +22,19 @@ export default function CommentThread({ postId }) {
   const { token } = useContext(AuthContext);
   const currentUserId = getSubFromToken(token);
 
+  const countDeep = (nodes) =>
+    (nodes || []).reduce(
+      (acc, n) => acc + 1 + (n.replies ? countDeep(n.replies) : 0),
+      0
+    );
+
   const refresh = async () => {
     setLoading(true);
     setErr(null);
     try {
       const data = await getThreadedByPost(postId);
       setTree(data);
+      onCountChange?.(countDeep(data)); 
     } catch {
       setErr("Ne mogu da učitam komentare.");
     } finally {
