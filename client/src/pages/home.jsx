@@ -3,7 +3,7 @@ import { usePosts } from "../context/PostContext";
 import PostCard from "../components/PostCard";
 
 export function Home() {
-  const { posts } = usePosts();
+  const { posts, loading, error } = usePosts();
 
   return (
     <div className="p-6">
@@ -19,10 +19,13 @@ export function Home() {
       </Link>
 
       <div className="mt-6 space-y-4">
-        {posts.length === 0 ? (
+        {loading && <p className="text-gray-500">Učitavanje postova...</p>}
+        {error && <p className="text-red-500">{error}</p>}
+        {!loading && !error && posts.length === 0 && (
           <p className="text-gray-500">Nema postova za prikaz.</p>
-        ) : (
-          posts.map((post, i) => <PostCard key={i} post={post} />)
+        )}
+        {!loading && !error && posts.length > 0 && (
+          posts.map((post) => <PostCard key={post.id || post._id} post={post} />)
         )}
       </div>
     </div>
