@@ -6,50 +6,45 @@ import { jwtDecode } from "jwt-decode";
 import http from "../api/axiosInstance";
 
 
-export default function CreatePostForm({ onPost }) {
-  const { token } = useContext(AuthContext);                            
-  const authorId = token ? (jwtDecode(token)?.sub ?? null) : null; 
+export default function CreatePostForm({ onPost, onCancel }) {
+  const { token } = useContext(AuthContext);
 
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [mediaUrls, setMediaUrls] = useState("");
-  const [categories, setCategories] = useState([]);     // { id, name } iz baze
-  const [selectedTagIds, setSelectedTagIds] = useState([]); // niz ObjectId stringova
-  const [tagInput, setTagInput] = useState("");         // koristi se kao "Novi tag"
+  const [categories, setCategories] = useState([]);
+  const [selectedTagIds, setSelectedTagIds] = useState([]);
+  const [tagInput, setTagInput] = useState("");
   const [loadingCats, setLoadingCats] = useState(false);
   const [posting, setPosting] = useState(false);
   const [err, setErr] = useState(null);
-  
+
   useEffect(() => {
-    const load = async () => {
+    const loadCategories = async () => {
       setLoadingCats(true);
       try {
         const data = await getAllCategories();
         setCategories(data);
-      } 
-      finally {
+      } finally {
         setLoadingCats(false);
       }
     };
-    load();
+    loadCategories();
   }, []);
 
   const toggleTag = (id) => {
-    setSelectedTagIds(prev =>
-      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    setSelectedTagIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
   };
 
-  // helper: pronađi kategoriju po imenu (case-insensitive)
   const byName = (arr, name) =>
     arr.find((c) => c.name.toLowerCase() === name.toLowerCase());
 
-  // kreiraj tag ako ne postoji; vrati njegov ID; auto-selektuj ga
   const ensureTagCreated = async (name) => {
     const trimmed = name.trim();
     if (!trimmed) return null;
 
-    // 1) Ako postoji u već učitanim kategorijama — selektuj i gotovo
     const existing = byName(categories, trimmed);
     if (existing) {
       setSelectedTagIds((prev) =>
@@ -58,14 +53,12 @@ export default function CreatePostForm({ onPost }) {
       return existing.id;
     }
 
-    // 2) Probaj da ga kreiraš
     try {
       const created = await createCategory({ name: trimmed });
       setCategories((prev) => [...prev, created]);
       setSelectedTagIds((prev) => [...prev, created.id]);
       return created.id;
     } catch (err) {
-      // 409 = već postoji u bazi (nismo ga imali u state-u) -> refetch & selektuj
       if (err?.response?.status === 409) {
         const latest = await getAllCategories();
         setCategories(latest || []);
@@ -81,7 +74,7 @@ export default function CreatePostForm({ onPost }) {
     }
   };
 
-const handleAddTag = async (e) => {
+  const handleAddTag = async (e) => {
     if (e.key !== "Enter") return;
     e.preventDefault();
     if (!tagInput.trim()) return;
@@ -94,247 +87,235 @@ const handleAddTag = async (e) => {
     }
   };
 
-  const removeTag = (id) => {
-    setSelectedTagIds(prev => prev.filter(x => x !== id));
+  const generateObjectId = () => {
+    let hex = "";
+    for (let i = 0; i < 24; i++) {
+      hex += Math.floor(Math.random() * 16).toString(16);
+    }
+    return hex;
   };
 
-function generateObjectId() {
-  const hex = [];
-  for (let i = 0; i < 24; i++) {
-    hex.push(Math.floor(Math.random() * 16).toString(16));
-  }
-  return hex.join("");
-}
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setPosting(true);
+    setErr(null);
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setPosting(true);
-  setErr(null);
+    if (!token) {
+      setPosting(false);
+      setErr("Niste ulogovani.");
+      return;
+    }
 
-  // validacija
-  if (!token) {
-    setPosting(false);
-    setErr("Niste ulogovani.");
-    return;
-  }
+    let sub;
+    try {
+      sub = jwtDecode(token)?.sub;
+    } catch {}
 
-  let sub;
-  try {
-    sub = jwtDecode(token)?.sub;
-  } catch { /* no-op */ }
+    if (!sub || !String(sub).trim()) {
+      setPosting(false);
+      setErr("Ne mogu da očitam authorId iz tokena.");
+      return;
+    }
 
-  if (!sub || !String(sub).trim()) {
-    setPosting(false);
-    setErr("Ne mogu da očitam authorId iz tokena.");
-    return;
-  }
+    if (!title.trim()) {
+      setPosting(false);
+      setErr("Naslov je obavezan.");
+      return;
+    }
 
-  if (!title.trim()) {
-    setPosting(false);
-    setErr("Naslov (title) je obavezan.");
-    return;
-  }
+    const urls = mediaUrls.split(",").map((u) => u.trim()).filter(Boolean);
+    const tagIdsClean = selectedTagIds.map(String).filter(Boolean);
 
-  const urls = mediaUrls
-    .split(",")
-    .map((u) => u.trim())
-    .filter(Boolean);
+    try {
+      const payload = {
+        id: generateObjectId(),
+        authorId: String(sub).trim(),
+        title: title.trim(),
+        body: body?.trim() || "",
+        mediaUrls: urls,
+        tagsIds: tagIdsClean,
+      };
 
-  const tagIdsClean = (selectedTagIds || [])
-    .map((x) => (x ?? "").toString().trim())
-    .filter(Boolean);
+      const created = await apiCreatePost(payload); // token se dodaje automatski iz axiosInstance
+      onPost?.(created);
 
-  try {
-    const nowIso = new Date().toISOString();
-    const payload = {
-      id: generateObjectId(),       // backend traži i id
-      authorId: String(sub).trim(), // iz JWT-a
-      title: title.trim(),
-      body: body?.trim() || "",
-      mediaUrls: urls,
-      tagsIds: tagIdsClean,
-      createdAt: nowIso,
-      updatedAt: nowIso,
-      likedByUserIds: []
-    };
+      // Reset forme
+      setTitle("");
+      setBody("");
+      setMediaUrls("");
+      setSelectedTagIds([]);
+      setTagInput("");
 
-    const created = await apiCreatePost(payload, token);
-    onPost?.(created);
-
-    // reset forme
-    setTitle("");
-    setBody("");
-    setMediaUrls("");
-    setSelectedTagIds([]);
-    setTagInput("");
-  } catch (ex) {
-    const data = ex?.response?.data;
-    console.error("POST /post error:", data || ex);
-    const msg =
-      (data?.errors &&
-        Object.entries(data.errors)
-          .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`)
-          .join(" | ")) ||
-      data?.title ||
-      data?.detail ||
-      "Nisam uspeo da sačuvam post.";
-    setErr(msg);
-  } finally {
-    setPosting(false);
-  }
-};
-
-  const formStyle = {
-    width: '100%',
-    margin: '0 auto',
-    backgroundColor: 'white',
-    borderRadius: '1rem',
-    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-    border: '1px solid #e2e8f0',
-    padding: '1.5rem',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1rem',
-    boxSizing: 'border-box'
-  };
-
-  const inputStyle = {
-    width: '100%',
-    border: '1px solid #d1d5db',
-    borderRadius: '0.75rem',
-    padding: '0.5rem 1rem',
-    outline: 'none',
-    boxSizing: 'border-box'
-  };
-  
-  const submitButtonStyle = {
-    padding: '0.5rem 1.5rem',
-    backgroundColor: '#3b82f6',
-    color: 'white',
-    fontWeight: '600',
-    borderRadius: '0.75rem',
-    border: 'none',
-    cursor: 'pointer',
-    transition: 'background-color 0.2s',
-  };
-
-  const saveDraftButtonStyle = {
-    padding: '0.5rem 1.5rem',
-    backgroundColor: '#e5e7eb',
-    color: '#4b5563',
-    fontWeight: '600',
-    borderRadius: '0.75rem',
-    border: 'none',
-    cursor: 'pointer',
-    transition: 'background-color 0.2s',
+      onCancel?.();
+    } catch (ex) {
+      console.error(ex.response?.data);
+      const data = ex?.response?.data;
+      const msg =
+        (data?.errors &&
+          Object.entries(data.errors)
+            .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`)
+            .join(" | ")) ||
+        data?.title ||
+        data?.detail ||
+        "Nisam uspeo da sačuvam post.";
+      setErr(msg);
+    } finally {
+      setPosting(false);
+    }
   };
 
   const tagPill = (active) => ({
-    display: 'inline-flex',
-    alignItems: 'center',
-    backgroundColor: active ? '#dbeafe' : '#f4f4f5',
-    color: active ? '#1e40af' : '#111827',
-    padding: '0.25rem 0.75rem',
-    borderRadius: '9999px',
-    fontSize: '0.875rem',
-    border: '1px solid #d1d5db',
-    cursor: 'pointer'
+    display: "inline-flex",
+    alignItems: "center",
+    backgroundColor: active ? "#1F2937" : "#374151",
+    color: "#F9FAFB",
+    padding: "0.25rem 0.75rem",
+    borderRadius: "9999px",
+    fontSize: "0.875rem",
+    border: active ? "1px solid #FBBF24" : "1px solid #4B5563",
+    cursor: "pointer",
+    transition: "all 0.2s",
   });
 
+  const filteredTags = categories.filter(
+    (c) =>
+      c.name.toLowerCase().includes(tagInput.toLowerCase()) &&
+      !selectedTagIds.includes(c.id)
+  );
+
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-start', minHeight: '100vh', backgroundColor: '#f3f4f6', padding: '1rem' }}>
-      <form onSubmit={handleSubmit} style={formStyle}>
-        {/* Title */}
+    <form
+      onSubmit={handleSubmit}
+      className="w-full max-w-3xl bg-gray-900 rounded-2xl p-6 flex flex-col gap-4 shadow-lg"
+    >
+      <h2 className="text-2xl font-bold text-yellow-400 text-center mb-4">
+        Kreiraj Post
+      </h2>
+
+      <input
+        type="text"
+        placeholder="Naslov"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        className="border border-gray-700 rounded-xl px-4 py-2 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 placeholder-gray-400"
+      />
+
+      <textarea
+        placeholder="Tekst (opciono)"
+        value={body}
+        onChange={(e) => setBody(e.target.value)}
+        className="border border-gray-700 rounded-xl px-4 py-2 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 min-h-[8rem] resize-y placeholder-gray-400"
+      />
+
+      <input
+        type="text"
+        placeholder="Image/Video URLs (comma separated)"
+        value={mediaUrls}
+        onChange={(e) => setMediaUrls(e.target.value)}
+        className="border border-gray-700 rounded-xl px-4 py-2 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 placeholder-gray-400"
+      />
+
+      <div className="flex flex-wrap gap-2 mt-1">
+        {mediaUrls
+          .split(",")
+          .map((url) => url.trim())
+          .filter(Boolean)
+          .map((url, idx) => (
+            <img
+              key={idx}
+              src={url}
+              alt="preview"
+              className="w-20 h-20 rounded-xl border border-gray-700 object-cover shadow-sm"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src =
+                  "https://placehold.co/80x80/1F2937/FFF?text=Img";
+              }}
+            />
+          ))}
+      </div>
+
+      {/* Tagovi sa autocomplete */}
+      <div className="grid gap-2 relative">
+        <div className="font-semibold text-gray-200">Tagovi</div>
+
         <input
           type="text"
-          placeholder="Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          style={{ ...inputStyle, outline: 'none', boxShadow: '0 0 0 2px #bfdbfe' }}
+          placeholder="Dodaj novi tag i pritisni Enter"
+          value={tagInput}
+          onChange={(e) => setTagInput(e.target.value)}
+          onKeyDown={handleAddTag}
+          className="border border-gray-700 rounded-xl px-4 py-2 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 placeholder-gray-400 mt-1 w-full"
+          autoComplete="off"
         />
 
-        {/* Body (Text) */}
-        <textarea
-          placeholder="Text (optional)"
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          style={{ ...inputStyle, minHeight: '8rem', outline: 'none', boxShadow: '0 0 0 2px #bfdbfe', resize: 'vertical' }}
-        />
+        {tagInput.trim() && (
+          <div className="absolute z-10 bg-gray-800 border border-gray-700 rounded-xl mt-1 w-full max-h-40 overflow-y-auto shadow-lg">
+            {filteredTags.map((c) => (
+              <div
+                key={c.id}
+                onClick={async () => {
+                  await ensureTagCreated(c.name);
+                  setTagInput("");
+                }}
+                className="px-3 py-2 cursor-pointer hover:bg-yellow-500 hover:text-gray-900 transition rounded-tl-xl rounded-tr-xl"
+              >
+                {c.name}
+              </div>
+            ))}
 
-        {/* Media */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <input
-            type="text"
-            placeholder="Image/Video URLs (comma separated)"
-            value={mediaUrls}
-            onChange={(e) => setMediaUrls(e.target.value)}
-            style={{ ...inputStyle, outline: 'none', boxShadow: '0 0 0 2px #bfdbfe' }}
-          />
-          {/* Image Preview */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
-            {mediaUrls
-              .split(",")
-              .map((url) => url.trim())
-              .filter((url) => url !== "")
-              .map((url, idx) => (
-                <img
-                  key={idx}
-                  src={url}
-                  alt="media preview"
-                  style={{ width: '5rem', height: '5rem', objectFit: 'cover', borderRadius: '0.5rem', border: '1px solid #e5e7eb' }}
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = `https://placehold.co/80x80/E2E8F0/1A202C?text=Broken`;
-                  }}
-                />
-              ))}
+            {!categories.some(
+              (c) => c.name.toLowerCase() === tagInput.toLowerCase()
+            ) && (
+              <div
+                onClick={async () => {
+                  await ensureTagCreated(tagInput);
+                  setTagInput("");
+                }}
+                className="px-3 py-2 cursor-pointer hover:bg-yellow-500 hover:text-gray-900 transition rounded-b-xl"
+              >
+                Dodaj "{tagInput}"
+              </div>
+            )}
           </div>
+        )}
+
+        {/* Selektovani tagovi */}
+        <div className="flex flex-wrap gap-2 mt-2">
+          {selectedTagIds
+            .map((id) => categories.find((c) => c.id === id))
+            .filter(Boolean)
+            .map((c) => (
+              <span
+                key={c.id}
+                onClick={() => toggleTag(c.id)}
+                style={tagPill(true)}
+                title="Klik za uklanjanje"
+              >
+                {c.name} ✓
+              </span>
+            ))}
         </div>
+      </div>
 
-        {/* TAGOVI iz baze */}
-        <div style={{ display: 'grid', gap: 8 }}>
-          <div style={{ fontWeight: 600 }}>Tagovi</div>
-          {loadingCats ? (
-            <div>Učitavanje tagova…</div>
-          ) : (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-              {categories.map(c => {
-                const active = selectedTagIds.includes(c.id);
-                return (
-                  <span
-                    key={c.id}
-                    onClick={() => toggleTag(c.id)}
-                    style={tagPill(active)}
-                    title={active ? "Ukloni" : "Dodaj"}
-                  >
-                    {c.name} {active ? "✓" : ""}
-                  </span>
-                );
-              })}
-              {!categories.length && <div>Nema postojećih tagova.</div>}
-            </div>
-          )}
+      {err && <div className="text-red-500 text-sm">{err}</div>}
 
-          {/* Novi tag – Enter za kreiranje i auto-selekt */}
-          <input
-            type="text"
-            placeholder="Dodaj novi tag i pritisni Enter"
-            value={tagInput}
-            onChange={(e) => setTagInput(e.target.value)}
-            onKeyDown={handleAddTag}
-            style={{ ...inputStyle, boxShadow: '0 0 0 2px #bfdbfe' }}
-          />
-        </div>
-
-        {err && <div style={{ color: "#e11d48" }}>{err}</div>}
-
-        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '1rem', paddingTop: '1rem' }}>
-          <button type="button" style={saveDraftButtonStyle}>Save Draft</button>
-          <button type="submit" style={submitButtonStyle} disabled={posting}>
-            {posting ? "Post..." : "Post"}
-          </button>
-        </div>
-      </form>
-    </div>
+      <div className="flex justify-end gap-2 pt-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="px-4 py-2 bg-gray-700 text-gray-200 rounded-xl hover:bg-gray-600 transition"
+        >
+          Odustani
+        </button>
+        <button
+          type="submit"
+          disabled={posting}
+          className="px-4 py-2 bg-yellow-500 text-gray-900 rounded-xl hover:bg-yellow-400 transition"
+        >
+          {posting ? "Objavljujem..." : "Objavi"}
+        </button>
+      </div>
+    </form>
   );
 }
