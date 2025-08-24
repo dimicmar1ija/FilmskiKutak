@@ -77,6 +77,9 @@ namespace ForumApi.Controllers
             return Ok(userDto);
         }
 
+
+
+        
         // PUT: api/user/{id}
         [Authorize]
         [HttpPut("{id}")]

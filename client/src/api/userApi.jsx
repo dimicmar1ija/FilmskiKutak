@@ -15,3 +15,7 @@ export const getUserProfile = async (userId) => {
 export const getUsersPreviews = () => {
   return axiosInstance.get(`/User/previews`).then(r => r.data);
 }
+
+export const getUserById = (id) => {
+  return axiosInstance.get(`/User/${id}`).then(r => r.data);
+}
