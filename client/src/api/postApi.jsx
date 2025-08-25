@@ -19,3 +19,7 @@ export const deletePost = (id) =>
 // izmena posta (id je sada deo body-ja, ne rute!)
 export const updatePost = (payload) =>
   axios.put("/Post", payload).then(r => r.data);
+
+export const toggleLikePost = (postId, userId) => {
+  return axios.put(`http://localhost:5132/api/Post/${postId}/like?userId=${userId}`);
+};

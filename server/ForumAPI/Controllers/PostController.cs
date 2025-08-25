@@ -52,6 +52,42 @@ public async Task<ActionResult> Update(Post updatedPost)
 }
 
 
+        [HttpPost("{id}/like")]
+        public async Task<ActionResult> LikePost(string id, [FromQuery] string userId)
+        {
+            if (string.IsNullOrWhiteSpace(userId))
+                return BadRequest("UserId je obavezan.");
+
+            try
+            {
+                await _postService.LikePostAsync(id, userId);
+                return Ok();
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+
+        }
+        [HttpPut("{id}/like")]
+public async Task<ActionResult<Post>> ToggleLike(string id, [FromQuery] string userId)
+{
+    if (string.IsNullOrEmpty(userId))
+        return BadRequest("UserId je obavezan");
+
+    var post = await _postService.GetByIdAsync(id);
+    if (post == null)
+        return NotFound();
+
+    if (post.LikedByUserIds.Contains(userId))
+        post.LikedByUserIds.Remove(userId); // Odlajkuj
+    else
+        post.LikedByUserIds.Add(userId); // Lajkuj
+
+    await _postService.UpdateAsync(post);
+    return Ok(post);
+}
+
 
 
         [HttpDelete("{id}")]

@@ -24,7 +24,27 @@ namespace ForumApi.Services
         {
             await _repo.DeleteAsync(post);
         }
-    
+
+    public async Task LikePostAsync(string postId, string userId)
+{
+    var post = await _repo.GetByIdAsync(postId);
+    if (post == null) throw new KeyNotFoundException("Post nije pronađen.");
+
+    if (post.LikedByUserIds.Contains(userId))
+    {
+        post.LikedByUserIds.Remove(userId); // Unlike
+    }
+    else
+    {
+        post.LikedByUserIds.Add(userId); // Like
+    }
+
+    post.UpdatedAt = DateTime.UtcNow;
+    await _repo.UpdateAsync(post);
+}
+
 
     }
+
+    
 }

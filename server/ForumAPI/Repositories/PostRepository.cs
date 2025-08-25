@@ -61,4 +61,18 @@ public class PostRepository : IPostRepository
 
         await _posts.ReplaceOneAsync(p => p.Id == post.Id, post);
     }
+
+    public async Task ToggleLikeAsync(string postId, string userId)
+{
+    var post = await GetByIdAsync(postId);
+    if (post == null) throw new KeyNotFoundException();
+
+    var update = post.LikedByUserIds.Contains(userId)
+        ? Builders<Post>.Update.Pull(p => p.LikedByUserIds, userId)
+        : Builders<Post>.Update.Push(p => p.LikedByUserIds, userId);
+
+    update = update.Set(p => p.UpdatedAt, DateTime.UtcNow);
+    await _posts.UpdateOneAsync(p => p.Id == postId, update);
+}
+
 }

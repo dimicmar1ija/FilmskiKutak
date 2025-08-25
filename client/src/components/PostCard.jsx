@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
+import { FaHeart, FaCommentAlt } from "react-icons/fa";
 import CommentThread from "../components/comments/CommentThread";
 import useCategoriesMap from "../hooks/useCategoriesMap";
-import { deletePost } from "../api/postApi";
+import { deletePost, toggleLikePost } from "../api/postApi";
 import { getUserById } from "../api/userApi";
 import { useAuth } from "../context/AuthContext";
-import CreatePostForm from "./CreatePostForm";
 
 dayjs.extend(relativeTime);
 
@@ -16,6 +16,7 @@ export default function PostView({ post, onEdit, onDelete }) {
   const [showComments, setShowComments] = useState(false);
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
   const [commentsCount, setCommentsCount] = useState(0);
+  const [likedByUserIds, setLikedByUserIds] = useState(post?.likedByUserIds || []);
 
   const [author, setAuthor] = useState(null);
   const [loadingAuthor, setLoadingAuthor] = useState(true);
@@ -23,7 +24,6 @@ export default function PostView({ post, onEdit, onDelete }) {
 
   const mediaUrls = Array.isArray(post?.mediaUrls) ? post.mediaUrls : [];
   const tagsIds = Array.isArray(post?.tagsIds) ? post.tagsIds : [];
-  const likedByUserIds = Array.isArray(post?.likedByUserIds) ? post.likedByUserIds : [];
 
   const isEdited = post?.updatedAt && post?.updatedAt !== post?.createdAt;
 
@@ -74,13 +74,26 @@ export default function PostView({ post, onEdit, onDelete }) {
     }
   };
 
-  if (loadingAuthor) return <div className="p-4 text-gray-500">Učitavanje autora...</div>;
-  if (authorError) return <div className="p-4 text-red-500">{authorError}</div>;
+  const handleLike = async () => {
+    if (!currentUser) return;
+    try {
+      const res = await toggleLikePost(post.id, currentUser.id);
+      setLikedByUserIds(res.data.likedByUserIds);
+    } catch (err) {
+      console.error("Greška pri lajkovanju:", err);
+    }
+  };
+
+  if (loadingAuthor)
+    return <div className="p-8 text-gray-500 text-center font-semibold">Učitavanje autora...</div>;
+  if (authorError)
+    return <div className="p-8 text-red-500 text-center font-semibold">{authorError}</div>;
 
   const currentMedia = mediaUrls[currentMediaIndex] || null;
+  const likedByCurrentUser = likedByUserIds.includes(currentUser?.id);
 
   return (
-    <div className="bg-zinc-950 rounded-3xl shadow-xl border border-zinc-800 mb-8 transform hover:scale-[1.01] transition-all duration-300 ease-in-out">
+    <div className="bg-zinc-950 rounded-3xl shadow-2xl border border-zinc-800 mb-8 transform transition-all duration-500 hover:shadow-yellow-500/10">
       
       {/* Zaglavlje */}
       <div className="flex items-center justify-between p-6 border-b border-zinc-800">
@@ -88,31 +101,30 @@ export default function PostView({ post, onEdit, onDelete }) {
           <img
             src={author?.avatarUrl ?? "https://placehold.co/56x56/1e293b/d4d4d8?text=U"}
             alt="Avatar"
-            className="w-14 h-14 rounded-full object-cover border-2 border-yellow-500 shadow-md"
+            className="w-16 h-16 rounded-full object-cover border-4 border-yellow-500 shadow-lg"
           />
           <div>
-            <p className="font-bold text-xl text-white">{author?.username ?? "Anonymous"}</p>
-            <p className="text-xs text-gray-400">
-              {post?.createdAt ? dayjs(post.createdAt).format("DD.MM.YYYY HH:mm") : "Nepoznat datum"}
+            <p className="font-bold text-2xl text-white">{author?.username ?? "Anonymous"}</p>
+            <p className="text-sm text-gray-400">
+              {post?.createdAt ? dayjs(post.createdAt).fromNow() : "Nepoznat datum"}
               {isEdited && post?.updatedAt && (
-                <span className="ml-2 text-gray-500">(Izmenjeno: {dayjs(post.updatedAt).fromNow()})</span>
+                <span className="ml-2 text-gray-500">(Izmenjeno)</span>
               )}
             </p>
           </div>
         </div>
 
-        {/* Dugmad za Edit/Delete */}
         {canEditOrDelete && (
           <div className="flex gap-2">
             <button
               onClick={() => onEdit?.(post)}
-              className="px-4 py-1 rounded bg-yellow-600 text-white hover:bg-yellow-500 transition"
+              className="px-4 py-2 rounded-full bg-yellow-600 text-white font-semibold hover:bg-yellow-500 transition-colors"
             >
               Izmeni
             </button>
             <button
               onClick={handleDelete}
-              className="px-4 py-1 rounded bg-red-600 text-white hover:bg-red-500 transition"
+              className="px-4 py-2 rounded-full bg-red-600 text-white font-semibold hover:bg-red-500 transition-colors"
             >
               Obriši
             </button>
@@ -121,35 +133,51 @@ export default function PostView({ post, onEdit, onDelete }) {
       </div>
 
       {/* Sadržaj */}
-      <div className="p-6 flex flex-col gap-5">
-        <h2 className="text-4xl font-extrabold text-red-500">{post?.title ?? "Untitled Post"}</h2>
+      <div className="p-6 flex flex-col gap-6">
+        <h2 className="text-4xl font-extrabold text-red-500 leading-tight">{post?.title ?? "Untitled Post"}</h2>
 
-        {/* Tagovi */}
         {tagsIds.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-1">
+          <div className="flex flex-wrap gap-2">
             {tagsIds.map((tagId, i) => (
-              <button
+              <span
                 key={i}
-                className="text-sm px-4 py-1 rounded-full bg-zinc-800 text-gray-400 hover:bg-yellow-600 hover:text-white transition"
+                className="text-sm px-4 py-1.5 rounded-full bg-zinc-800 text-gray-400 font-medium border border-zinc-700 transition-colors hover:bg-yellow-600 hover:text-white hover:border-yellow-600 cursor-pointer"
               >
-                {categoriesMap[tagId] ?? tagId}
-              </button>
+                #{categoriesMap[tagId] ?? tagId}
+              </span>
             ))}
           </div>
         )}
 
-        <p className="text-gray-300">{post?.body ?? ""}</p>
+        <p className="text-lg text-gray-300 whitespace-pre-wrap">{post?.body ?? ""}</p>
 
-        {/* Media Carousel */}
         {currentMedia && (
-          <div className="relative w-full aspect-video bg-zinc-800 rounded-3xl overflow-hidden shadow-lg">
+          <div className="relative w-full aspect-video rounded-3xl overflow-hidden shadow-lg border border-zinc-700">
             {mediaUrls.length > 1 && (
-              <button
-                onClick={handlePrevMedia}
-                className="absolute left-4 top-1/2 -translate-y-1/2 bg-black bg-opacity-70 text-white w-12 h-12 rounded-full flex justify-center items-center hover:bg-opacity-90 transition"
-              >
-                ◀
-              </button>
+              <>
+                <button
+                  onClick={handlePrevMedia}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 text-white w-14 h-14 rounded-full flex justify-center items-center text-3xl hover:bg-opacity-80 transition-all z-10 focus:outline-none"
+                >
+                  ❮
+                </button>
+                <button
+                  onClick={handleNextMedia}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 text-white w-14 h-14 rounded-full flex justify-center items-center text-3xl hover:bg-opacity-80 transition-all z-10 focus:outline-none"
+                >
+                  ❯
+                </button>
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+                  {mediaUrls.map((_, idx) => (
+                    <div
+                      key={idx}
+                      className={`w-3 h-3 rounded-full transition-colors ${
+                        idx === currentMediaIndex ? "bg-yellow-500" : "bg-gray-400 opacity-50"
+                      }`}
+                    />
+                  ))}
+                </div>
+              </>
             )}
 
             {(() => {
@@ -164,7 +192,7 @@ export default function PostView({ post, onEdit, onDelete }) {
                       key={currentMediaIndex}
                       src={`https://www.youtube.com/embed/${videoId}?rel=0`}
                       title="YouTube video player"
-                      className="w-full h-full rounded-2xl"
+                      className="w-full h-full"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
                     ></iframe>
@@ -176,38 +204,48 @@ export default function PostView({ post, onEdit, onDelete }) {
                   key={currentMediaIndex}
                   src={currentMedia}
                   alt="media preview"
-                  className="w-full h-full object-cover rounded-2xl"
-                  onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/720x405/333333/ffffff?text=Video+nedostupan"; }}
+                  className="w-full h-full object-contain bg-zinc-800"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = "https://placehold.co/720x405/333333/ffffff?text=Video+nedostupan";
+                  }}
                 />
               );
             })()}
-
-            {mediaUrls.length > 1 && (
-              <button
-                onClick={handleNextMedia}
-                className="absolute right-4 top-1/2 -translate-y-1/2 bg-black bg-opacity-70 text-white w-12 h-12 rounded-full flex justify-center items-center hover:bg-opacity-90 transition"
-              >
-                ▶
-              </button>
-            )}
           </div>
         )}
       </div>
 
-      {/* Actions */}
+      {/* Akcije */}
       <div className="flex items-center gap-8 px-6 py-4 border-t border-zinc-800">
-        <button className="flex items-center gap-2 text-gray-400">
-          <span className="text-2xl">❤️</span>
-          <span className="text-lg font-bold">{likedByUserIds.length}</span>
+        <button
+          className={`flex items-center gap-2 text-xl transition-colors ${
+            likedByCurrentUser ? "text-red-500" : "text-gray-400 hover:text-red-500"
+          }`}
+          onClick={handleLike}
+        >
+          <FaHeart className="text-3xl" />
+          <span className="text-xl font-bold">{likedByUserIds.length}</span>
         </button>
-        <button className="flex items-center gap-2 text-gray-400" onClick={handleToggleComments}>
-          <span className="text-2xl">💬</span>
-          <span className="text-lg font-bold">Komentari {commentsCount ? `(${commentsCount})` : ""}</span>
+
+        <button
+          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors animate-pulse"
+          onClick={handleToggleComments}
+        >
+          <FaCommentAlt className="text-3xl" />
+          <span className="text-xl font-bold">
+            Komentari {commentsCount ? `(${commentsCount})` : ""}
+          </span>
         </button>
       </div>
 
-      {/* Comments */}
-      {showComments && <CommentThread postId={post.id} onCountChange={setCommentsCount} />}
+      {/* Komentari */}
+      {showComments && (
+        <div className="p-6 bg-zinc-900 border-t border-zinc-800 rounded-b-3xl shadow-inner transition-all duration-300 ease-in-out text-white">
+          {/* Samo CommentThread, bez dodatnog input polja */}
+          <CommentThread postId={post.id} onCountChange={setCommentsCount} hideInput />
+        </div>
+      )}
     </div>
   );
 }
