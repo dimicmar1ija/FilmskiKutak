@@ -97,7 +97,13 @@ namespace ForumApi.Controllers
 
             user.Email = updateUserDto.Email ?? user.Email;
             user.Username = updateUserDto.Username ?? user.Username;
-            // Password updates should be separate
+            user.Bio = updateUserDto.Bio ?? user.Bio;
+            user.AvatarUrl = updateUserDto.AvatarUrl ?? user.AvatarUrl;
+
+            if (isAdmin && updateUserDto.Role != null)
+            {
+                user.Role = updateUserDto.Role;
+            }
 
             await _userService.UpdateAsync(user);
             return Ok("User updated successfully.");
