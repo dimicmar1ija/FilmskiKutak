@@ -17,8 +17,20 @@ export default function CommentForm({ postId, parentCommentId = null, onSubmit }
         placeholder={parentCommentId ? "Odgovori na komentar…" : "Napiši komentar…"}
         value={body}
         onChange={(e) => setBody(e.target.value)}
+        className="w-full p-3 rounded-xl placeholder-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+        style={{
+          backgroundColor: "#111827", // tamno-crna
+          color: "#facc15",           // žuta
+          caretColor: "#fbbf24",      // svetlija žuta za kursor
+          border: "1px solid #374151", // tamnija ivica
+        }}
       />
-      <button type="submit">{parentCommentId ? "Odgovori" : "Objavi komentar"}</button>
+      <button
+        type="submit"
+        className="px-3 py-1 bg-yellow-500 text-black rounded-full hover:bg-yellow-400 transition-colors"
+      >
+        {parentCommentId ? "Odgovori" : "Objavi komentar"}
+      </button>
     </form>
   );
 }

@@ -243,7 +243,7 @@ export default function PostView({ post, onEdit, onDelete }) {
       {showComments && (
         <div className="p-6 bg-zinc-900 border-t border-zinc-800 rounded-b-3xl shadow-inner transition-all duration-300 ease-in-out text-white">
           {/* Samo CommentThread, bez dodatnog input polja */}
-          <CommentThread postId={post.id} onCountChange={setCommentsCount} hideInput />
+          <CommentThread postId={post.id} onCountChange={setCommentsCount} className="w-full p-3 rounded-xl placeholder-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500" />
         </div>
       )}
     </div>
