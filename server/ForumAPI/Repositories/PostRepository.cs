@@ -5,44 +5,60 @@ public class PostRepository : IPostRepository
     private readonly IMongoCollection<Post> _posts;
 
     public PostRepository(IMongoDatabase database)
-
     {
         _posts = database.GetCollection<Post>("Posts");
     }
 
     public async Task CreateAsync(Post post)
     {
+        if (post == null)
+            throw new ArgumentNullException(nameof(post));
+
         await _posts.InsertOneAsync(post);
     }
 
     public async Task DeleteAsync(Post post)
     {
-        if (post==null || string.IsNullOrEmpty(post.Id))
+        if (post == null || string.IsNullOrEmpty(post.Id))
+            throw new ArgumentException("Post ili Id nije validan");
+
         await _posts.DeleteOneAsync(p => p.Id == post.Id);
     }
 
     public async Task<IEnumerable<Post>> GetAllAsync()
     {
-       return await _posts.Find(_=>true).ToListAsync();
-    }
-
-    public async Task<IEnumerable<Post>> GetByAuthorAsync(string authorId)
-    {
-        return await _posts.Find(post => post.AuthorId == authorId).ToListAsync();
+        return await _posts.Find(_ => true).ToListAsync();
     }
 
     public async Task<Post> GetByIdAsync(string id)
     {
-         return await _posts.Find(post=>post.Id==id).FirstOrDefaultAsync();
+        if (string.IsNullOrEmpty(id))
+            throw new ArgumentException("Id nije validan");
+
+        return await _posts.Find(post => post.Id == id).FirstOrDefaultAsync();
     }
 
-    public Task<IEnumerable<Post>> GetByTagAsync(string tagId)
+    public async Task<IEnumerable<Post>> GetByAuthorAsync(string authorId)
     {
-        throw new NotImplementedException();
+        if (string.IsNullOrEmpty(authorId))
+            throw new ArgumentException("authorId nije validan");
+
+        return await _posts.Find(post => post.AuthorId == authorId).ToListAsync();
+    }
+
+    public async Task<IEnumerable<Post>> GetByTagAsync(string tagId)
+    {
+        if (string.IsNullOrEmpty(tagId))
+            throw new ArgumentException("tagId nije validan");
+
+        return await _posts.Find(post => post.TagsIds != null && post.TagsIds.Contains(tagId)).ToListAsync();
     }
 
     public async Task UpdateAsync(Post post)
     {
+        if (post == null || string.IsNullOrEmpty(post.Id))
+            throw new ArgumentException("Post ili Id nije validan");
+
         await _posts.ReplaceOneAsync(p => p.Id == post.Id, post);
     }
 }

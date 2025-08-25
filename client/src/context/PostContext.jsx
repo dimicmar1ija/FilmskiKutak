@@ -35,8 +35,17 @@ export const PostProvider = ({ children }) => {
     setPosts((prev) => [newPost, ...prev]);
   };
 
+  // Ažuriranje postojećeg posta lokalno
+  const updatePost = (updatedPost) => {
+    setPosts((prev) =>
+      prev.map((post) => (post.id === updatedPost.id ? updatedPost : post))
+    );
+  };
+
   return (
-    <PostContext.Provider value={{ posts, addPost, fetchPosts, loading, error }}>
+    <PostContext.Provider
+      value={{ posts, addPost, updatePost, fetchPosts, loading, error }}
+    >
       {children}
     </PostContext.Provider>
   );

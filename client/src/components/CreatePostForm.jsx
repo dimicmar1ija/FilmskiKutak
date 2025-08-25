@@ -3,22 +3,25 @@ import { getAllCategories, createCategory } from "../api/categoryApi";
 import { createPost as apiCreatePost } from "../api/postApi";           
 import { AuthContext } from "../context/AuthContext";                   
 import { jwtDecode } from "jwt-decode";
+import { updatePost } from "../api/postApi";
 import http from "../api/axiosInstance";
 
 
-export default function CreatePostForm({ onPost, onCancel }) {
+export default function CreatePostForm({ onPost, onCancel, existingPost }) {
   const { token } = useContext(AuthContext);
 
-  const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
-  const [mediaUrls, setMediaUrls] = useState("");
+  // --- State ---
+  const [title, setTitle] = useState(existingPost?.title ?? "");
+  const [body, setBody] = useState(existingPost?.body ?? "");
+  const [mediaUrls, setMediaUrls] = useState(existingPost?.mediaUrls?.join(", ") ?? "");
   const [categories, setCategories] = useState([]);
-  const [selectedTagIds, setSelectedTagIds] = useState([]);
+  const [selectedTagIds, setSelectedTagIds] = useState(existingPost?.tagsIds ?? []);
   const [tagInput, setTagInput] = useState("");
   const [loadingCats, setLoadingCats] = useState(false);
   const [posting, setPosting] = useState(false);
   const [err, setErr] = useState(null);
 
+  // --- Load categories ---
   useEffect(() => {
     const loadCategories = async () => {
       setLoadingCats(true);
@@ -32,15 +35,16 @@ export default function CreatePostForm({ onPost, onCancel }) {
     loadCategories();
   }, []);
 
+  // --- Toggle tag selection ---
   const toggleTag = (id) => {
     setSelectedTagIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
   };
 
-  const byName = (arr, name) =>
-    arr.find((c) => c.name.toLowerCase() === name.toLowerCase());
+  const byName = (arr, name) => arr.find((c) => c.name.toLowerCase() === name.toLowerCase());
 
+  // --- Ensure tag exists or create it ---
   const ensureTagCreated = async (name) => {
     const trimmed = name.trim();
     if (!trimmed) return null;
@@ -59,6 +63,7 @@ export default function CreatePostForm({ onPost, onCancel }) {
       setSelectedTagIds((prev) => [...prev, created.id]);
       return created.id;
     } catch (err) {
+      // Handle race condition (409 conflict)
       if (err?.response?.status === 409) {
         const latest = await getAllCategories();
         setCategories(latest || []);
@@ -89,19 +94,16 @@ export default function CreatePostForm({ onPost, onCancel }) {
 
   const generateObjectId = () => {
     let hex = "";
-    for (let i = 0; i < 24; i++) {
-      hex += Math.floor(Math.random() * 16).toString(16);
-    }
+    for (let i = 0; i < 24; i++) hex += Math.floor(Math.random() * 16).toString(16);
     return hex;
   };
 
+  // --- Handle submit (create or update) ---
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setPosting(true);
     setErr(null);
 
     if (!token) {
-      setPosting(false);
       setErr("Niste ulogovani.");
       return;
     }
@@ -112,13 +114,11 @@ export default function CreatePostForm({ onPost, onCancel }) {
     } catch {}
 
     if (!sub || !String(sub).trim()) {
-      setPosting(false);
       setErr("Ne mogu da očitam authorId iz tokena.");
       return;
     }
 
     if (!title.trim()) {
-      setPosting(false);
       setErr("Naslov je obavezan.");
       return;
     }
@@ -126,42 +126,39 @@ export default function CreatePostForm({ onPost, onCancel }) {
     const urls = mediaUrls.split(",").map((u) => u.trim()).filter(Boolean);
     const tagIdsClean = selectedTagIds.map(String).filter(Boolean);
 
+    setPosting(true);
     try {
-      const now = new Date(); // trenutni datum i vreme
+      const now = new Date();
       const payload = {
-        id: generateObjectId(),
-        authorId: String(sub).trim(),
+        id: existingPost?.id ?? generateObjectId(),
+        authorId: existingPost?.authorId ?? String(sub).trim(),
         title: title.trim(),
         body: body?.trim() || "",
         mediaUrls: urls,
         tagsIds: tagIdsClean,
-        createdAt: now,   // vreme kreiranja
-        updatedAt: now    // pri kreiranju isto kao createdAt
+        likedByUserIds: existingPost?.likedByUserIds ?? [],
+        createdAt: existingPost?.createdAt ?? now,
+        updatedAt: now,
       };
 
-      const created = await apiCreatePost(payload);
-      onPost?.(created);
+      const savedPost = existingPost
+        ? await updatePost(payload)
+        : await apiCreatePost(payload);
 
-      // Reset forme
-      setTitle("");
-      setBody("");
-      setMediaUrls("");
-      setSelectedTagIds([]);
-      setTagInput("");
+      onPost?.(savedPost);
+
+      if (!existingPost) {
+        setTitle("");
+        setBody("");
+        setMediaUrls("");
+        setSelectedTagIds([]);
+        setTagInput("");
+      }
 
       onCancel?.();
     } catch (ex) {
-      console.error(ex.response?.data);
-      const data = ex?.response?.data;
-      const msg =
-        (data?.errors &&
-          Object.entries(data.errors)
-            .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`)
-            .join(" | ")) ||
-        data?.title ||
-        data?.detail ||
-        "Nisam uspeo da sačuvam post.";
-      setErr(msg);
+      console.error(ex);
+      setErr("Došlo je do greške prilikom čuvanja posta.");
     } finally {
       setPosting(false);
     }
@@ -181,10 +178,17 @@ export default function CreatePostForm({ onPost, onCancel }) {
   });
 
   const filteredTags = categories.filter(
-    (c) =>
-      c.name.toLowerCase().includes(tagInput.toLowerCase()) &&
-      !selectedTagIds.includes(c.id)
+    (c) => c.name.toLowerCase().includes(tagInput.toLowerCase()) && !selectedTagIds.includes(c.id)
   );
+
+  const isModified = existingPost
+    ? title !== existingPost.title ||
+      body !== existingPost.body ||
+      mediaUrls !== (existingPost.mediaUrls?.join(", ") ?? "") ||
+      JSON.stringify(selectedTagIds) !== JSON.stringify(existingPost.tagsIds ?? [])
+    : true;
+
+  const canSave = title.trim() !== "" && isModified && !posting;
 
   return (
     <form
@@ -192,7 +196,7 @@ export default function CreatePostForm({ onPost, onCancel }) {
       className="w-full max-w-3xl bg-gray-900 rounded-2xl p-6 flex flex-col gap-4 shadow-lg"
     >
       <h2 className="text-2xl font-bold text-yellow-400 text-center mb-4">
-        Kreiraj Post
+        {existingPost ? "Izmeni Post" : "Kreiraj Post"}
       </h2>
 
       <input
@@ -218,30 +222,9 @@ export default function CreatePostForm({ onPost, onCancel }) {
         className="border border-gray-700 rounded-xl px-4 py-2 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 placeholder-gray-400"
       />
 
-      <div className="flex flex-wrap gap-2 mt-1">
-        {mediaUrls
-          .split(",")
-          .map((url) => url.trim())
-          .filter(Boolean)
-          .map((url, idx) => (
-            <img
-              key={idx}
-              src={url}
-              alt="preview"
-              className="w-20 h-20 rounded-xl border border-gray-700 object-cover shadow-sm"
-              onError={(e) => {
-                e.target.onerror = null;
-                e.target.src =
-                  "https://placehold.co/80x80/1F2937/FFF?text=Img";
-              }}
-            />
-          ))}
-      </div>
-
       {/* Tagovi sa autocomplete */}
       <div className="grid gap-2 relative">
         <div className="font-semibold text-gray-200">Tagovi</div>
-
         <input
           type="text"
           placeholder="Dodaj novi tag i pritisni Enter"
@@ -251,7 +234,6 @@ export default function CreatePostForm({ onPost, onCancel }) {
           className="border border-gray-700 rounded-xl px-4 py-2 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 placeholder-gray-400 mt-1 w-full"
           autoComplete="off"
         />
-
         {tagInput.trim() && (
           <div className="absolute z-10 bg-gray-800 border border-gray-700 rounded-xl mt-1 w-full max-h-40 overflow-y-auto shadow-lg">
             {filteredTags.map((c) => (
@@ -266,7 +248,6 @@ export default function CreatePostForm({ onPost, onCancel }) {
                 {c.name}
               </div>
             ))}
-
             {!categories.some(
               (c) => c.name.toLowerCase() === tagInput.toLowerCase()
             ) && (
@@ -313,10 +294,20 @@ export default function CreatePostForm({ onPost, onCancel }) {
         </button>
         <button
           type="submit"
-          disabled={posting}
-          className="px-4 py-2 bg-yellow-500 text-gray-900 rounded-xl hover:bg-yellow-400 transition"
+          disabled={!canSave}
+          className={`px-4 py-2 rounded-xl transition ${
+            canSave
+              ? "bg-yellow-500 text-gray-900 hover:bg-yellow-400"
+              : "bg-gray-600 text-gray-400 cursor-not-allowed"
+          }`}
         >
-          {posting ? "Objavljujem..." : "Objavi"}
+          {posting
+            ? existingPost
+              ? "Ažuriram..."
+              : "Objavljujem..."
+            : existingPost
+            ? "Sačuvaj"
+            : "Objavi"}
         </button>
       </div>
     </form>

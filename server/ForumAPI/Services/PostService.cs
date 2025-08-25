@@ -20,9 +20,11 @@ namespace ForumApi.Services
 
         public Task UpdateAsync(Post post) => _repo.UpdateAsync(post);
 
-        public Task DeleteAsync(Post post) => _repo.DeleteAsync(post);
-
-
+        public async Task DeleteAsync(Post post)
+        {
+            await _repo.DeleteAsync(post);
+        }
+    
 
     }
 }

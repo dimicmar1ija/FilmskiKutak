@@ -38,18 +38,20 @@ namespace ForumAPI.Controllers
         }
 
         [HttpPut]
-        public async Task<ActionResult> Update(string id, Post updatedPost)
-        {
-            if (id != updatedPost.Id)
-                return BadRequest("ID mismatch");
+public async Task<ActionResult> Update(Post updatedPost)
+{
+    if (updatedPost == null || string.IsNullOrWhiteSpace(updatedPost.Id))
+        return BadRequest("Post ili ID nedostaje.");
 
-            var existingPost = await _postService.GetByIdAsync(id);
-            if (existingPost == null)
-                return NotFound();
+    var existingPost = await _postService.GetByIdAsync(updatedPost.Id);
+    if (existingPost == null)
+        return NotFound();
 
-            await _postService.UpdateAsync(updatedPost);
-            return NoContent();
-        }
+    await _postService.UpdateAsync(updatedPost);
+    return Ok(updatedPost);
+}
+
+
 
 
         [HttpDelete("{id}")]
@@ -60,6 +62,7 @@ namespace ForumAPI.Controllers
                 return NotFound();
 
             await _postService.DeleteAsync(post);
+            
             return NoContent();
         }
 
