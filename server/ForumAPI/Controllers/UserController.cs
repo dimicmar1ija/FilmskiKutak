@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using ForumApi.Services;
 using ForumAPI.Dtos;
 using Microsoft.AspNetCore.Authorization;
@@ -53,7 +54,7 @@ namespace ForumApi.Controllers
             return Ok(userDtos);
         }
 
-        
+
         // GET: api/user/{id}
         [Authorize]
         [HttpGet("{id}")]
@@ -79,7 +80,7 @@ namespace ForumApi.Controllers
 
 
 
-        
+
         // PUT: api/user/{id}
         [Authorize]
         [HttpPut("{id}")]
@@ -91,6 +92,9 @@ namespace ForumApi.Controllers
 
 
             var isAdmin = User.IsInRole("admin");
+            var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0";
+            if (currentUserId != id && !isAdmin)
+                return Forbid("You can only update your own profile.");
 
 
             user.Email = updateUserDto.Email ?? user.Email;
@@ -117,6 +121,21 @@ namespace ForumApi.Controllers
 
             await _userService.DeleteAsync(id);
             return Ok("User deleted successfully.");
+        }
+    
+
+        [Authorize]
+        [HttpGet("claims-test")]
+        public IActionResult ClaimsTest()
+        {
+            foreach (var claim in User.Claims)
+            {
+                Console.WriteLine($"{claim.Type}: {claim.Value}");
+            }
+
+            // Or return it in the response so you can see it in Postman / browser
+            var claims = User.Claims.Select(c => new { c.Type, c.Value }).ToList();
+            return Ok(claims);
         }
 
     }

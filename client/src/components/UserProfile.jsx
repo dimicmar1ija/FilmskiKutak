@@ -18,7 +18,11 @@ export const UserProfile = () => {
   <div className="page-container">
     <div className="profile-card">
       <div className="profile-header">
-        <img src="/avatar.png" alt="Avatar" />
+        <img
+            src={user.avatarUrl || "/avatar.png"}
+            alt="Avatar"
+            className="w-20 h-20 rounded-full object-cover"
+          />
         <div>
           <h3>{user.username}</h3>
           <p>{user.role}</p>
