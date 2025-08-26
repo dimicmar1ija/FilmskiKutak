@@ -89,11 +89,9 @@ namespace ForumApi.Controllers
             if (user == null)
                 return NotFound();
 
-            var currentUserId = User.FindFirst("id")?.Value ?? "0";
+
             var isAdmin = User.IsInRole("admin");
 
-            if (currentUserId != id && !isAdmin)
-                return Forbid();
 
             user.Email = updateUserDto.Email ?? user.Email;
             user.Username = updateUserDto.Username ?? user.Username;
