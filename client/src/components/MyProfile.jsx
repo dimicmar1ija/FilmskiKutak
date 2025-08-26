@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { UsersList } from "./UserPreview";
 import { updateUser } from "../api/userApi";
@@ -7,12 +7,24 @@ export const MyProfile = () => {
   const { user, loading } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    email: user?.email || null,
-    username: user?.username || null,
-    bio: user?.bio || null,
-    avatarUrl: user?.avatarUrl || null
+    email: "",
+    username: "",
+    bio: "",
+    avatarUrl: ""
   });
   const [saving, setSaving] = useState(false);
+
+
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        email: user.email ?? "",
+        username: user.username ?? "",
+        bio: user.bio ?? "",
+        avatarUrl: user.avatarUrl ?? ""
+      });
+    }
+  }, [user]);
 
   if (loading)
     return <p className="text-center text-gray-400 mt-8">Loading profile...</p>;
@@ -29,12 +41,22 @@ export const MyProfile = () => {
       setSaving(true);
       await updateUser(user.id, formData);
       setIsEditing(false);
-      // TODO: refresh user context here so changes show immediately
     } catch (err) {
       console.error("Error updating profile:", err);
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleCancel = () => {
+
+    setFormData({
+      email: user.email ?? "",
+      username: user.username ?? "",
+      bio: user.bio ?? "",
+      avatarUrl: user.avatarUrl ?? ""
+    });
+    setIsEditing(false);
   };
 
   return (
@@ -61,7 +83,6 @@ export const MyProfile = () => {
           <p><strong>Account created:</strong> {new Date(user.createdAt).toLocaleDateString()}</p>
         </div>
 
-        {/* Action Buttons */}
         <div className="mt-4">
           {isEditing ? (
             <div className="edit-form space-y-3">
@@ -114,7 +135,7 @@ export const MyProfile = () => {
                   {saving ? "Saving..." : "Save"}
                 </button>
                 <button
-                  onClick={() => setIsEditing(false)}
+                  onClick={handleCancel}
                   className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
                 >
                   Cancel

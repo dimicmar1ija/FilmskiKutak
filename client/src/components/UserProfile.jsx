@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { getUserById } from "../api/userApi";
 
 export const UserProfile = () => {
-  const { id } = useParams(); // get user id from URL
+  const { id } = useParams(); 
   const [user, setUser] = useState(null);
 
   useEffect(() => {
