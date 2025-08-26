@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { UsersList } from "./UserPreview";
-import { updateUser } from "../api/userApi";
+import { updateUser, deleteUser } from "../api/userApi";
+import { useNavigate } from "react-router-dom";
 
 export const MyProfile = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth(); // Assuming logout clears auth
+  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
@@ -13,7 +15,7 @@ export const MyProfile = () => {
     avatarUrl: ""
   });
   const [saving, setSaving] = useState(false);
-
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -49,7 +51,6 @@ export const MyProfile = () => {
   };
 
   const handleCancel = () => {
-
     setFormData({
       email: user.email ?? "",
       username: user.username ?? "",
@@ -57,6 +58,20 @@ export const MyProfile = () => {
       avatarUrl: user.avatarUrl ?? ""
     });
     setIsEditing(false);
+  };
+
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete your profile? This action cannot be undone.")) return;
+    try {
+      setDeleting(true);
+      await deleteUser(user.id);
+      logout(); // Clear authentication
+      navigate("/"); // Redirect to home or login page
+    } catch (err) {
+      console.error("Error deleting profile:", err);
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
@@ -143,12 +158,21 @@ export const MyProfile = () => {
               </div>
             </div>
           ) : (
-            <button
-              onClick={() => setIsEditing(true)}
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-            >
-              Edit Profile
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setIsEditing(true)}
+                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+              >
+                Edit Profile
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+              >
+                {deleting ? "Deleting..." : "Delete Profile"}
+              </button>
+            </div>
           )}
         </div>
       </div>

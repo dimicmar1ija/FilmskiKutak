@@ -111,7 +111,7 @@ namespace ForumApi.Controllers
             return Ok("User updated successfully.");
         }
 
-        [Authorize(Roles = "admin")]
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUserAsync(string id)
         {
@@ -119,6 +119,11 @@ namespace ForumApi.Controllers
             if (user == null)
                 return NotFound();
 
+            var isAdmin = User.IsInRole("admin");
+            var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0";
+            if (currentUserId != id && !isAdmin)
+                return Forbid("You can only delete your own profile.");
+        
             await _userService.DeleteAsync(id);
             return Ok("User deleted successfully.");
         }
