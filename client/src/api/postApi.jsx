@@ -20,6 +20,11 @@ export const deletePost = (id) =>
 export const updatePost = (payload) =>
   axios.put("/Post", payload).then(r => r.data);
 
+// dohvatanje postova po authorId
+export const getPostsByAuthor = (authorId) =>
+axios.get(`/Post/by-author/${authorId}`).then(r => r.data);
+
+
 export const toggleLikePost = (postId, userId) => {
   return axios.put(`http://localhost:5132/api/Post/${postId}/like?userId=${userId}`);
 };

@@ -102,7 +102,7 @@ public async Task<ActionResult<Post>> ToggleLike(string id, [FromQuery] string u
             return NoContent();
         }
 
-        [HttpGet("by-author/{authoorId}")]
+        [HttpGet("by-author/{authorId}")]
         public async Task<ActionResult<IEnumerable<Post>>> GetByAuthor(string authorId)
         {
             var post = await _postService.GetByAuthorAsync(authorId);
