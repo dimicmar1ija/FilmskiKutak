@@ -24,7 +24,7 @@ const Header = () => {
 
   return (
     <>
-      <header className="fixed top-0 left-0 w-full flex justify-between items-center bg-teal-500 text-white px-4 py-3 z-50 shadow-md">
+      <header className="fixed top-0 left-0 w-full flex justify-between items-center bg-yellow-600 text-white px-4 py-3 z-50 shadow-md">
         <h1
           className="text-xl font-bold flex items-center cursor-pointer"
           onClick={() => navigate("/home")}
