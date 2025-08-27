@@ -51,7 +51,7 @@ export const UsersList = () => {
               onClick={() => handleDelete(user.id)}
               className="px-3 py-1 text-sm text-white bg-red-500 rounded hover:bg-red-600"
             >
-              Delete
+              Obriši
             </button>
           )}
         </div>

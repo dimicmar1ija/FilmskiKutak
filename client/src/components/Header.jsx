@@ -43,13 +43,13 @@ const Header = () => {
             onClick={handleLogout}
             className="bg-red-500 hover:bg-red-600 px-3 py-1 rounded"
           >
-            Log Out
+            Odjavi se
           </button>
           <button
             onClick={() => navigate("/profile")}
             className="bg-gray-500 hover:bg-gray-600 px-3 py-1 rounded"
           >
-            My Profile
+            Moj profil
           </button>
         </div>
       </header>

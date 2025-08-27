@@ -61,7 +61,7 @@ export const MyProfile = () => {
   };
 
   const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete your profile? This action cannot be undone.")) return;
+    if (!confirm("Da li ste sigurni da želite da obrišete svoj profil?")) return;
     try {
       setDeleting(true);
       await deleteUser(user.id);
@@ -78,7 +78,7 @@ export const MyProfile = () => {
     <div className="page-container">
       {/* Profile Section */}
       <div className="profile-card">
-        <h2>My Profile</h2>
+        <h2>Moj profil</h2>
 
         <div className="profile-header">
           <img
@@ -95,7 +95,7 @@ export const MyProfile = () => {
         <div className="profile-details mt-4">
           <p><strong>Email:</strong> {user.email}</p>
           {user.bio && <p><strong>Bio:</strong> {user.bio}</p>}
-          <p><strong>Account created:</strong> {new Date(user.createdAt).toLocaleDateString()}</p>
+          <p><strong>Profil kreiran:</strong> {new Date(user.createdAt).toLocaleDateString()}</p>
         </div>
 
         <div className="mt-4">
@@ -112,7 +112,7 @@ export const MyProfile = () => {
                 />
               </label>
               <label className="block">
-                <span className="font-semibold">Username:</span>
+                <span className="font-semibold">Korisničko ime:</span>
                 <input
                   type="text"
                   name="username"
@@ -163,14 +163,14 @@ export const MyProfile = () => {
                 onClick={() => setIsEditing(true)}
                 className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
               >
-                Edit Profile
+                Izmeni profil
               </button>
               <button
                 onClick={handleDelete}
                 disabled={deleting}
                 className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
               >
-                {deleting ? "Deleting..." : "Delete Profile"}
+                {deleting ? "Brišem..." : "Obriši profil"}
               </button>
             </div>
           )}
@@ -179,7 +179,7 @@ export const MyProfile = () => {
 
       {/* Other Users Section */}
       <div className="other-users mt-8">
-        <h2 className="text-2xl font-bold mb-4">Other Users</h2>
+        <h2 className="text-2xl font-bold mb-4">Drugi korisnici</h2>
         <UsersList />
       </div>
     </div>

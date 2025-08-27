@@ -25,16 +25,8 @@ export function Home() {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Welcome to the Home Page</h1>
 
-      <button
-        onClick={openModalForCreate}
-        className="mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-      >
-        Kreiraj post
-      </button>
-
-      <div className="mt-6 flex flex-col gap-4 w-full">
+      <div className="mt-6 flex flex-col gap-4 w-full items-center">
         {loading && <p className="text-gray-500 w-full">Učitavanje postova...</p>}
         {error && <p className="text-red-500 w-full">{error}</p>}
         {!loading && !error && sortedPosts.length === 0 && (
