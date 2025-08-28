@@ -1,4 +1,3 @@
-//Biranje tagova za post (attach/detach)
 import { useEffect, useState } from "react";
 import { getAllCategories } from "../../api/categoryApi";
 

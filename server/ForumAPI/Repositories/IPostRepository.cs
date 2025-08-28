@@ -7,4 +7,5 @@ public interface IPostRepository
     Task CreateAsync(Post post);
     Task UpdateAsync(Post post);
     Task DeleteAsync(Post post);
+    Task<List<Post>> GetByTagsAsync(IEnumerable<string> tagIds, bool matchAll);
 }

@@ -20,7 +20,6 @@ export default function CommentItem({
   const [showReply, setShowReply] = useState(false);
   const [authorName, setAuthorName] = useState("Učitavanje...");
 
-  // Dohvatanje username na osnovu authorId
   useEffect(() => {
     if (comment.authorId) {
       getUserById(comment.authorId)
@@ -40,20 +39,16 @@ export default function CommentItem({
     <div className="border-l-2 border-zinc-700 pl-3 mt-3" style={{ textAlign: "left" }}>
       {!editing ? (
         <>
-          {/* Autor */}
           <div className="text-sm text-yellow-500">Autor: {authorName}</div>
 
-          {/* Tekst komentara */}
           <div className="whitespace-pre-wrap text-gray-200">{comment.body}</div>
 
-          {/* Datum */}
           <div className="text-xs text-gray-500">
             {new Date(comment.createdAt).toLocaleString()}
           </div>
 
-          {/* Akcije */}
           <div className="flex gap-3 mt-2 items-center">
-            {/* Lajk */}
+
             <button
               onClick={() => (userLiked ? onUnlike(comment.id) : onLike(comment.id))}
               className={`flex items-center gap-1 px-2 py-1 rounded-full text-sm transition-colors ${
@@ -65,7 +60,6 @@ export default function CommentItem({
               <FaThumbsUp /> {likes}
             </button>
 
-            {/* Dislajk */}
             <button
               onClick={() => (userDisliked ? onUndislike(comment.id) : onDislike(comment.id))}
               className={`flex items-center gap-1 px-2 py-1 rounded-full text-sm transition-colors ${
@@ -77,7 +71,6 @@ export default function CommentItem({
               <FaThumbsDown /> {dislikes}
             </button>
 
-            {/* Odgovori */}
             <button
               onClick={() => setShowReply((s) => !s)}
               className="px-2 py-1 rounded-full text-sm bg-zinc-700 text-gray-300 hover:bg-yellow-500 hover:text-black transition-colors"
@@ -85,7 +78,6 @@ export default function CommentItem({
               Odgovori
             </button>
 
-            {/* Izmeni i Obriši (samo za autora) */}
             {canEdit && (
               <>
                 <button
@@ -105,7 +97,7 @@ export default function CommentItem({
           </div>
         </>
       ) : (
-        // Forma za editovanje
+        // editovanje
         <div className="grid gap-2 mt-2">
           <textarea
             rows={3}
@@ -144,7 +136,7 @@ export default function CommentItem({
         </div>
       )}
 
-      {/* Forma za reply */}
+      {/* odgovor */}
       {showReply && (
         <div className="mt-2">
           <CommentForm
@@ -158,7 +150,6 @@ export default function CommentItem({
         </div>
       )}
 
-      {/* Rekurzivno renderovanje ugnježdenih odgovora */}
       {replies?.length > 0 && (
         <div className="mt-2 flex flex-col gap-3">
           {replies.map((child) => (

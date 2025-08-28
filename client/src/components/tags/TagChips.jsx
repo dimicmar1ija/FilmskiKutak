@@ -1,8 +1,6 @@
-// client/src/components/tags/TagChips.jsx
 export default function TagChips({ tags = [] }) {
   if (!tags?.length) return null;
 
-  // tags može biti niz ID-jeva ili niz objekata { id, name }
   const renderName = (t) => (typeof t === "string" ? t : (t.name || t.id));
 
   return (

@@ -38,18 +38,18 @@ namespace ForumAPI.Controllers
         }
 
         [HttpPut]
-public async Task<ActionResult> Update(Post updatedPost)
-{
-    if (updatedPost == null || string.IsNullOrWhiteSpace(updatedPost.Id))
-        return BadRequest("Post ili ID nedostaje.");
+        public async Task<ActionResult> Update(Post updatedPost)
+        {
+            if (updatedPost == null || string.IsNullOrWhiteSpace(updatedPost.Id))
+                return BadRequest("Post ili ID nedostaje.");
 
-    var existingPost = await _postService.GetByIdAsync(updatedPost.Id);
-    if (existingPost == null)
-        return NotFound();
+            var existingPost = await _postService.GetByIdAsync(updatedPost.Id);
+            if (existingPost == null)
+                return NotFound();
 
-    await _postService.UpdateAsync(updatedPost);
-    return Ok(updatedPost);
-}
+            await _postService.UpdateAsync(updatedPost);
+            return Ok(updatedPost);
+        }
 
 
         [HttpPost("{id}/like")]
@@ -70,23 +70,23 @@ public async Task<ActionResult> Update(Post updatedPost)
 
         }
         [HttpPut("{id}/like")]
-public async Task<ActionResult<Post>> ToggleLike(string id, [FromQuery] string userId)
-{
-    if (string.IsNullOrEmpty(userId))
-        return BadRequest("UserId je obavezan");
+        public async Task<ActionResult<Post>> ToggleLike(string id, [FromQuery] string userId)
+        {
+            if (string.IsNullOrEmpty(userId))
+                return BadRequest("UserId je obavezan");
 
-    var post = await _postService.GetByIdAsync(id);
-    if (post == null)
-        return NotFound();
+            var post = await _postService.GetByIdAsync(id);
+            if (post == null)
+                return NotFound();
 
-    if (post.LikedByUserIds.Contains(userId))
-        post.LikedByUserIds.Remove(userId); // Odlajkuj
-    else
-        post.LikedByUserIds.Add(userId); // Lajkuj
+            if (post.LikedByUserIds.Contains(userId))
+                post.LikedByUserIds.Remove(userId); // Odlajkuj
+            else
+                post.LikedByUserIds.Add(userId); // Lajkuj
 
-    await _postService.UpdateAsync(post);
-    return Ok(post);
-}
+            await _postService.UpdateAsync(post);
+            return Ok(post);
+        }
 
 
 
@@ -98,7 +98,7 @@ public async Task<ActionResult<Post>> ToggleLike(string id, [FromQuery] string u
                 return NotFound();
 
             await _postService.DeleteAsync(post);
-            
+
             return NoContent();
         }
 
@@ -115,5 +115,22 @@ public async Task<ActionResult<Post>> ToggleLike(string id, [FromQuery] string u
             var posts = await _postService.GetByTagAsync(tagId);
             return Ok(posts);
         }
+
+        [HttpGet("search")]
+    public async Task<IActionResult> Search([FromQuery] string? tagsIds, [FromQuery] string match = "any")
+    {
+        var list = (tagsIds ?? "")
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Distinct()
+            .ToList();
+
+        if (list.Count == 0)
+            return Ok(await _postService.GetAllAsync());
+
+        var requireAll = match.Equals("all", StringComparison.OrdinalIgnoreCase);
+        var posts = await _postService.GetByTagsAsync(list, requireAll);
+        return Ok(posts);
+    }
+
     }
 }

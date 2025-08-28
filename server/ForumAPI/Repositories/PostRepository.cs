@@ -7,6 +7,9 @@ public class PostRepository : IPostRepository
     public PostRepository(IMongoDatabase database)
     {
         _posts = database.GetCollection<Post>("Posts");
+       
+        _posts.Indexes.CreateOne(new CreateIndexModel<Post>(
+            Builders<Post>.IndexKeys.Ascending(p => p.TagsIds)));
     }
 
     public async Task CreateAsync(Post post)
@@ -63,16 +66,28 @@ public class PostRepository : IPostRepository
     }
 
     public async Task ToggleLikeAsync(string postId, string userId)
-{
-    var post = await GetByIdAsync(postId);
-    if (post == null) throw new KeyNotFoundException();
+    {
+        var post = await GetByIdAsync(postId);
+        if (post == null) throw new KeyNotFoundException();
 
-    var update = post.LikedByUserIds.Contains(userId)
-        ? Builders<Post>.Update.Pull(p => p.LikedByUserIds, userId)
-        : Builders<Post>.Update.Push(p => p.LikedByUserIds, userId);
+        var update = post.LikedByUserIds.Contains(userId)
+            ? Builders<Post>.Update.Pull(p => p.LikedByUserIds, userId)
+            : Builders<Post>.Update.Push(p => p.LikedByUserIds, userId);
 
-    update = update.Set(p => p.UpdatedAt, DateTime.UtcNow);
-    await _posts.UpdateOneAsync(p => p.Id == postId, update);
-}
+        update = update.Set(p => p.UpdatedAt, DateTime.UtcNow);
+        await _posts.UpdateOneAsync(p => p.Id == postId, update);
+    }
+
+    public async Task<List<Post>> GetByTagsAsync(IEnumerable<string> tagIds, bool matchAll)
+    {
+        var ids = tagIds.ToList();
+        var filter = matchAll
+            ? Builders<Post>.Filter.All(p => p.TagsIds, ids)       // svi izabrani tagovi
+            : Builders<Post>.Filter.AnyIn(p => p.TagsIds, ids);     // bar jedan tag
+
+        return await _posts.Find(filter)
+                        .SortByDescending(p => p.CreatedAt)
+                        .ToListAsync();
+    }
 
 }

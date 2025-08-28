@@ -19,10 +19,10 @@ export default function CommentForm({ postId, parentCommentId = null, onSubmit }
         onChange={(e) => setBody(e.target.value)}
         className="w-full p-3 rounded-xl placeholder-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-500"
         style={{
-          backgroundColor: "#111827", // tamno-crna
-          color: "#facc15",           // žuta
-          caretColor: "#fbbf24",      // svetlija žuta za kursor
-          border: "1px solid #374151", // tamnija ivica
+          backgroundColor: "#111827", 
+          color: "#facc15",           
+          caretColor: "#fbbf24",      
+          border: "1px solid #374151", 
         }}
       />
       <button
