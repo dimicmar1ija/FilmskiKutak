@@ -23,7 +23,7 @@ export default function TagFilterSidebar({
     <div className="sticky top-4 grid gap-2">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="w-full text-left px-4 py-2 rounded-full bg-yellow-500 text-white font-semibold hover:bg-yellow-400 transition-colors"
+        className="w-full text-left px-4 py-2 rounded-full bg-yellow-500 text-white font-semibold "
       >
         Tagovi {open ? "▾" : "▸"}
       </button>
